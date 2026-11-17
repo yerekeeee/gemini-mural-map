@@ -1,0 +1,3276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MURALMAP.KZ // Карта стрит-арта и муралов Казахстана</title>
+
+  <!-- Google Fonts with full Cyrillic & Kazakh glyph support (ә, ғ, қ, ң, ө, ұ, ү, һ, і) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&family=Oswald:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet.js CSS (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <style>
+    /* ==========================================================================
+       1. NEO-BRUTALISM DESIGN TOKENS & STRICT GEOMETRY RESET
+       ========================================================================== */
+    :root {
+      --paper: #EFEFEA;
+      --concrete: #BDBDB5;
+      --asphalt: #111111;
+      --acid: #E9FF1F;
+      --signal: #FF3B1D;
+      --electro: #2438FF;
+      --white: #FFFFFF;
+
+      --font-display: 'Oswald', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --border-sm: 2px solid var(--asphalt);
+      --border-lg: 3px solid var(--asphalt);
+      --shadow-sm: 3px 3px 0px var(--asphalt);
+      --shadow-md: 4px 4px 0px var(--asphalt);
+      --shadow-lg: 6px 6px 0px var(--asphalt);
+      --shadow-acid: 4px 4px 0px var(--acid);
+    }
+
+    /* Strict 0px border-radius everywhere */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      border-radius: 0px !important;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--paper);
+      color: var(--asphalt);
+      font-family: var(--font-sans);
+      line-height: 1.45;
+      overflow-x: hidden;
+      /* Architectural / GPS Coordinate Grid Background */
+      background-image:
+        linear-gradient(to right, rgba(17, 17, 17, 0.07) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(17, 17, 17, 0.07) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    /* Custom Brutalist Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--concrete);
+      border-left: 2px solid var(--asphalt);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--asphalt);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--signal);
+    }
+
+    /* Typography Utilities */
+    .font-display {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      line-height: 1.05;
+    }
+    .font-mono {
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       2. BRUTALIST COMPONENTS: BUTTONS, CARDS, STAMPS, BADGES, BATTERY BARS
+       ========================================================================== */
+    .btn-brutal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 11px 20px;
+      border: var(--border-sm);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      text-decoration: none;
+      user-select: none;
+      transition: transform 0.07s ease, box-shadow 0.07s ease, background-color 0.12s ease;
+    }
+    .btn-brutal:active {
+      transform: translate(4px, 4px);
+      box-shadow: none !important;
+    }
+    .btn-acid {
+      background-color: var(--acid);
+      color: var(--asphalt);
+    }
+    .btn-acid:hover {
+      background-color: #f4ff66;
+    }
+    .btn-dark {
+      background-color: var(--asphalt);
+      color: var(--paper);
+      box-shadow: 4px 4px 0px var(--signal);
+    }
+    .btn-dark:hover {
+      background-color: #262626;
+    }
+    .btn-paper {
+      background-color: var(--paper);
+      color: var(--asphalt);
+    }
+    .btn-paper:hover {
+      background-color: var(--concrete);
+    }
+    .btn-signal {
+      background-color: var(--signal);
+      color: var(--white);
+    }
+    .btn-electro {
+      background-color: var(--electro);
+      color: var(--white);
+    }
+    .btn-sm {
+      padding: 7px 13px;
+      font-size: 0.875rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-sm:active {
+      transform: translate(3px, 3px);
+    }
+
+    .card-brutal {
+      background-color: var(--paper);
+      border: var(--border-lg);
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+
+    /* Stencil Stamps */
+    .stamp {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border: 3px solid currentColor;
+      line-height: 1.1;
+      user-select: none;
+    }
+    .stamp-signal {
+      color: var(--signal);
+      background: rgba(239, 239, 234, 0.94);
+      transform: rotate(-3deg);
+    }
+    .stamp-paid {
+      color: var(--signal);
+      border-width: 4px;
+      font-size: 1.5rem;
+      padding: 6px 18px;
+      transform: rotate(-6deg);
+      background: var(--acid);
+    }
+    .stamp-direct {
+      color: var(--asphalt);
+      background: var(--acid);
+      transform: rotate(-1.5deg);
+      box-shadow: 3px 3px 0px var(--asphalt);
+    }
+
+    /* Tags & Chips */
+    .tag-brutal {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 2px solid var(--asphalt);
+      background: var(--concrete);
+      color: var(--asphalt);
+    }
+    .tag-acid { background: var(--acid); }
+    .tag-dark { background: var(--asphalt); color: var(--paper); }
+    .tag-electro { background: var(--electro); color: var(--white); }
+    .tag-signal { background: var(--signal); color: var(--white); }
+
+    /* Mural Image Grayscale-to-Color Interaction */
+    .mural-art-frame {
+      position: relative;
+      overflow: hidden;
+      border-bottom: var(--border-lg);
+      background: var(--asphalt);
+      aspect-ratio: 16 / 10;
+    }
+    .mural-art-frame svg,
+    .mural-art-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(100%) contrast(115%);
+      transition: filter 0.25s ease, transform 0.25s ease;
+    }
+    .card-brutal:hover .mural-art-frame svg,
+    .card-brutal:hover .mural-art-frame img,
+    .mural-art-frame:hover svg,
+    .mural-art-frame:hover img {
+      filter: grayscale(0%) contrast(100%);
+      transform: scale(1.02);
+    }
+
+    /* Segmented Battery Progress Bar */
+    .battery-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .battery-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      padding: 3px;
+      height: 22px;
+      background: var(--asphalt);
+      border: 2px solid var(--asphalt);
+    }
+    .battery-cap {
+      width: 6px;
+      height: 12px;
+      background: var(--asphalt);
+    }
+    .battery-seg {
+      background: #2f2f2f;
+      height: 100%;
+      transition: background-color 0.2s ease;
+    }
+    .battery-seg.filled {
+      background: var(--acid);
+    }
+    .battery-seg.overfunded {
+      background: var(--signal);
+    }
+
+    /* Inputs & Selects */
+    .input-brutal, .select-brutal, .textarea-brutal {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--asphalt);
+      background: var(--white);
+      border: var(--border-sm);
+      outline: none;
+    }
+    .input-brutal:focus, .select-brutal:focus, .textarea-brutal:focus {
+      background: #fcffd9;
+      box-shadow: 3px 3px 0px var(--electro);
+    }
+
+    /* ==========================================================================
+       3. HEADER, NAVIGATION & LIVE DONATION TICKER
+       ========================================================================== */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--paper);
+      border-bottom: var(--border-lg);
+    }
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--asphalt);
+      cursor: pointer;
+    }
+    .brand-box {
+      background: var(--asphalt);
+      color: var(--acid);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.45rem;
+      padding: 4px 10px;
+      border: 2px solid var(--asphalt);
+      letter-spacing: 0.04em;
+    }
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .nav-desktop {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-link {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 8px 12px;
+      background: transparent;
+      color: var(--asphalt);
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .nav-link:hover {
+      background: var(--concrete);
+      border-color: var(--asphalt);
+    }
+    .nav-link.active {
+      background: var(--asphalt);
+      color: var(--acid);
+      border-color: var(--asphalt);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* KZ / RU Language Toggle */
+    .lang-switch {
+      display: inline-flex;
+      border: var(--border-sm);
+      background: var(--concrete);
+      box-shadow: 2px 2px 0px var(--asphalt);
+    }
+    .lang-btn {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border: none;
+      background: transparent;
+      color: var(--asphalt);
+      cursor: pointer;
+    }
+    .lang-btn.active {
+      background: var(--asphalt);
+      color: var(--acid);
+    }
+
+    .burger-btn {
+      display: none;
+      background: var(--paper);
+      border: var(--border-sm);
+      box-shadow: 2px 2px 0px var(--asphalt);
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    /* Mobile Drawer Menu */
+    .mobile-menu {
+      display: none;
+      background: var(--concrete);
+      border-bottom: var(--border-lg);
+      padding: 12px 16px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mobile-menu.open {
+      display: flex;
+    }
+    .mobile-menu .nav-link {
+      text-align: left;
+      background: var(--paper);
+      border: 2px solid var(--asphalt);
+    }
+    .mobile-menu .nav-link.active {
+      background: var(--asphalt);
+      color: var(--acid);
+    }
+
+    /* Scrolling Live Donation Ticker */
+    .ticker-bar {
+      background: var(--asphalt);
+      color: var(--acid);
+      border-bottom: var(--border-lg);
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 7px 0;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      position: relative;
+    }
+    .ticker-track {
+      display: inline-block;
+      padding-left: 100%;
+      animation: tickerScroll 38s linear infinite;
+    }
+    .ticker-bar:hover .ticker-track {
+      animation-play-state: paused;
+    }
+    .ticker-item {
+      display: inline-block;
+      margin-right: 42px;
+    }
+    .ticker-sep {
+      color: var(--signal);
+      margin: 0 10px;
+    }
+    @keyframes tickerScroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* ==========================================================================
+       4. LAYOUT CONTAINERS & SPA VIEWS
+       ========================================================================== */
+    .spa-view {
+      display: none;
+    }
+    .spa-view.active {
+      display: block;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 16px 64px;
+    }
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: var(--border-lg);
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    /* ==========================================================================
+       5. HOME VIEW: HERO & TACTICAL KAZAKHSTAN RADAR MAP
+       ========================================================================== */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 40px;
+    }
+    .hero-main {
+      background: var(--paper);
+      border: var(--border-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .hero-coords {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.3rem, 5vw, 4.1rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 0.98;
+      margin: 14px 0 18px;
+      letter-spacing: -0.01em;
+    }
+    .hero-highlight {
+      background: var(--acid);
+      padding: 0 8px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    .hero-subtitle {
+      font-size: 1.05rem;
+      font-weight: 500;
+      max-width: 60ch;
+      margin: 0 0 26px;
+    }
+    .hero-cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .hero-stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 2px dashed var(--asphalt);
+    }
+    .stat-box {
+      background: var(--concrete);
+      border: 2px solid var(--asphalt);
+      padding: 10px;
+    }
+    .stat-num {
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+    .stat-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    /* Interactive Kazakhstan Radar Preview */
+    .kz-radar-card {
+      background: var(--asphalt);
+      color: var(--paper);
+      border: var(--border-lg);
+      box-shadow: var(--shadow-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .radar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--acid);
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+    }
+    .radar-canvas {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 11;
+      margin: 14px 0;
+      border: 2px solid #333;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(233, 255, 31, 0.08), transparent 70%),
+        linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 100% 100%, 24px 24px, 24px 24px;
+      overflow: hidden;
+    }
+    .radar-pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 5;
+    }
+    .radar-dot {
+      width: 16px;
+      height: 16px;
+      background: var(--acid);
+      border: 2px solid var(--asphalt);
+      box-shadow: 0 0 0 0 rgba(233, 255, 31, 0.75);
+      animation: pulseBeacon 1.8s infinite;
+    }
+    .radar-pin:hover .radar-dot {
+      background: var(--signal);
+    }
+    .radar-label {
+      background: var(--asphalt);
+      color: var(--acid);
+      border: 1px solid var(--acid);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+    @keyframes pulseBeacon {
+      0% { box-shadow: 0 0 0 0 rgba(233, 255, 31, 0.8); }
+      70% { box-shadow: 0 0 0 14px rgba(233, 255, 31, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(233, 255, 31, 0); }
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 22px;
+    }
+
+    /* ==========================================================================
+       6. FULLSCREEN MAP VIEW & BOTTOM-SHEET / SIDEBAR DRAWER
+       ========================================================================== */
+    .map-workspace {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 104px);
+      min-height: 560px;
+      position: relative;
+    }
+    .map-filter-bar {
+      background: var(--concrete);
+      border-bottom: var(--border-lg);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      z-index: 500;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .chip-btn {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border: 2px solid var(--asphalt);
+      background: var(--paper);
+      color: var(--asphalt);
+      cursor: pointer;
+    }
+    .chip-btn.active {
+      background: var(--acid);
+      box-shadow: 2px 2px 0px var(--asphalt);
+    }
+
+    .map-stage {
+      flex: 1;
+      position: relative;
+      display: flex;
+      overflow: hidden;
+      background: var(--asphalt);
+    }
+    #main-map {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #111111;
+    }
+
+    /* Custom Leaflet Neo-Brutalist Markers */
+    .brutal-pin {
+      width: 26px;
+      height: 26px;
+      background: var(--acid);
+      border: 3px solid var(--asphalt);
+      box-shadow: 3px 3px 0px var(--asphalt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 11px;
+      color: var(--asphalt);
+      transition: transform 0.12s ease, background-color 0.12s ease;
+    }
+    .brutal-pin.active {
+      background: var(--signal);
+      color: var(--white);
+      transform: scale(1.22);
+      z-index: 900 !important;
+    }
+    .brutal-pin.route-stop {
+      width: 32px;
+      height: 32px;
+      background: var(--acid);
+      color: var(--asphalt);
+      font-size: 12px;
+      border-width: 3px;
+    }
+    .brutal-pin.route-stop.active {
+      background: var(--signal);
+      color: var(--white);
+    }
+    .brutal-cluster {
+      width: 38px;
+      height: 38px;
+      background: var(--paper);
+      color: var(--asphalt);
+      border: 3px solid var(--asphalt);
+      box-shadow: 4px 4px 0px var(--acid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .user-radar-pin {
+      width: 22px;
+      height: 22px;
+      background: var(--electro);
+      border: 3px solid var(--white);
+      box-shadow: 0 0 0 6px rgba(36, 56, 255, 0.45);
+    }
+
+    /* Leaflet Controls Override */
+    .leaflet-control-zoom a {
+      background: var(--paper) !important;
+      color: var(--asphalt) !important;
+      border: 2px solid var(--asphalt) !important;
+      font-family: var(--font-mono) !important;
+      font-weight: 800 !important;
+      box-shadow: 3px 3px 0px var(--asphalt) !important;
+    }
+    .leaflet-control-zoom a:hover {
+      background: var(--acid) !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(17, 17, 17, 0.85) !important;
+      color: #aaa !important;
+      font-family: var(--font-mono) !important;
+      font-size: 10px !important;
+    }
+    .leaflet-control-attribution a {
+      color: var(--acid) !important;
+    }
+
+    /* Mural Drawer (Desktop Sidebar / Mobile Bottom-Sheet) */
+    .mural-drawer {
+      width: 420px;
+      max-width: 100%;
+      background: var(--paper);
+      border-left: var(--border-lg);
+      z-index: 600;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: transform 0.22s ease;
+    }
+    .mural-drawer.hidden {
+      display: none;
+    }
+    .drawer-top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--asphalt);
+      color: var(--acid);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .drawer-close-btn {
+      background: var(--signal);
+      color: var(--white);
+      border: 2px solid var(--paper);
+      font-family: var(--font-mono);
+      font-weight: 800;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+
+    .route-banner {
+      position: absolute;
+      bottom: 18px;
+      left: 16px;
+      z-index: 550;
+      background: var(--asphalt);
+      color: var(--paper);
+      border: 3px solid var(--acid);
+      box-shadow: 4px 4px 0px var(--asphalt);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: calc(100% - 32px);
+    }
+
+    /* ==========================================================================
+       7. ADD MURAL VIEW & FAQ ACCORDION
+       ========================================================================== */
+    .add-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+    }
+    .picker-map-box {
+      height: 330px;
+      border: var(--border-lg);
+      box-shadow: var(--shadow-md);
+      background: var(--asphalt);
+    }
+    .faq-item {
+      border: var(--border-lg);
+      background: var(--paper);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 12px;
+    }
+    .faq-question {
+      width: 100%;
+      text-align: left;
+      background: var(--paper);
+      border: none;
+      padding: 16px 18px;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .faq-question:hover {
+      background: var(--acid);
+    }
+    .faq-answer {
+      display: none;
+      padding: 16px 18px;
+      border-top: 2px solid var(--asphalt);
+      background: var(--white);
+      font-size: 0.98rem;
+    }
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+    .faq-item.open .faq-question {
+      background: var(--asphalt);
+      color: var(--acid);
+    }
+
+    /* ==========================================================================
+       8. MODALS (DONATION MODAL & ARTIST PROFILE MODAL) & TOAST
+       ========================================================================== */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 17, 17, 0.82);
+      z-index: 2000;
+      padding: 16px;
+      overflow-y: auto;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-box {
+      width: 100%;
+      max-width: 580px;
+      background: var(--paper);
+      border: 3px solid var(--asphalt);
+      box-shadow: 8px 8px 0px var(--acid);
+      position: relative;
+      margin: auto;
+    }
+    .modal-box.wide {
+      max-width: 780px;
+    }
+    .modal-header {
+      background: var(--asphalt);
+      color: var(--acid);
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 20px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .preset-btn {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 0.92rem;
+      padding: 10px 6px;
+      border: 2px solid var(--asphalt);
+      background: var(--white);
+      cursor: pointer;
+    }
+    .preset-btn.active {
+      background: var(--acid);
+      box-shadow: 3px 3px 0px var(--asphalt);
+    }
+
+    /* Toast Notification Banner */
+    .toast-banner {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 3000;
+      background: var(--asphalt);
+      color: var(--acid);
+      border: 3px solid var(--acid);
+      box-shadow: 5px 5px 0px var(--signal);
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      max-width: 360px;
+      display: none;
+    }
+    .toast-banner.show {
+      display: block;
+    }
+
+    /* ==========================================================================
+       9. RESPONSIVE (MOBILE-FIRST BOTTOM SHEET & ADAPTATION)
+       ========================================================================== */
+    @media (max-width: 1024px) {
+      .nav-desktop {
+        display: none;
+      }
+      .burger-btn {
+        display: inline-block;
+      }
+      .hero-grid, .add-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .brand-sub {
+        display: none;
+      }
+      .map-workspace {
+        height: calc(100vh - 96px);
+      }
+      /* Mobile Bottom-Sheet Drawer for Selected Mural */
+      .mural-drawer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: 76vh;
+        border-left: none;
+        border-top: 4px solid var(--asphalt);
+        box-shadow: 0 -6px 0px var(--acid);
+        z-index: 1500;
+      }
+      .preset-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .hero-stats-strip {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       STICKY HEADER & BILINGUAL NAVIGATION
+       ======================================================================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand-logo" onclick="navigateTo('home')" role="button" tabindex="0">
+        <div class="brand-box">MURALMAP.KZ</div>
+        <div class="brand-sub">
+          KZ // STREET ART<br />
+          DIRECT DONATIONS
+        </div>
+      </div>
+
+      <nav class="nav-desktop" aria-label="Main Navigation">
+        <button class="nav-link active" data-route="home" data-i18n="nav_home" onclick="navigateTo('home')">Главная</button>
+        <button class="nav-link" data-route="map" data-i18n="nav_map" onclick="navigateTo('map')">Карта</button>
+        <button class="nav-link" data-route="artists" data-i18n="nav_artists" onclick="navigateTo('artists')">Художники</button>
+        <button class="nav-link" data-route="routes" data-i18n="nav_routes" onclick="navigateTo('routes')">Маршруты</button>
+        <button class="nav-link" data-route="add" data-i18n="nav_add" onclick="navigateTo('add')">Добавить</button>
+        <button class="nav-link" data-route="about" data-i18n="nav_about" onclick="navigateTo('about')">О проекте / FAQ</button>
+      </nav>
+
+      <div class="header-actions">
+        <!-- Instant Bilingual Toggle KZ / RU -->
+        <div class="lang-switch" role="group" aria-label="Language Switcher">
+          <button type="button" class="lang-btn" id="btn-lang-kz" onclick="setLanguage('KZ')">KZ</button>
+          <button type="button" class="lang-btn active" id="btn-lang-ru" onclick="setLanguage('RU')">RU</button>
+        </div>
+
+        <button type="button" class="btn-brutal btn-acid btn-sm" onclick="openDonateModal()" data-i18n="btn_donate_short">
+          Задонатить ₸
+        </button>
+
+        <button type="button" class="burger-btn" id="burger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+          ☰
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Burger Navigation -->
+    <nav class="mobile-menu" id="mobile-menu">
+      <button class="nav-link active" data-route="home" data-i18n="nav_home" onclick="navigateTo('home')">Главная</button>
+      <button class="nav-link" data-route="map" data-i18n="nav_map" onclick="navigateTo('map')">Карта</button>
+      <button class="nav-link" data-route="artists" data-i18n="nav_artists" onclick="navigateTo('artists')">Художники</button>
+      <button class="nav-link" data-route="routes" data-i18n="nav_routes" onclick="navigateTo('routes')">Маршруты</button>
+      <button class="nav-link" data-route="add" data-i18n="nav_add" onclick="navigateTo('add')">Добавить</button>
+      <button class="nav-link" data-route="about" data-i18n="nav_about" onclick="navigateTo('about')">О проекте / FAQ</button>
+    </nav>
+  </header>
+
+  <!-- LIVE REALTIME DONATION TICKER -->
+  <div class="ticker-bar" aria-live="polite">
+    <div class="ticker-track" id="donation-ticker-track"></div>
+  </div>
+
+  <!-- ========================================================================
+       VIEW 1: HOME (ГЛАВНАЯ / БАСТЫ БЕТ)
+       ======================================================================== -->
+  <main id="view-home" class="spa-view active">
+    <div class="container">
+      <!-- HERO SECTION -->
+      <section class="hero-grid">
+        <div class="hero-main">
+          <div>
+            <div class="hero-coords">
+              <span>N 43.2389° E 76.8897° // ALMATY</span>
+              <span>N 51.1694° E 71.4491° // ASTANA</span>
+              <span>N 42.3417° E 69.5901° // SHYMKENT</span>
+            </div>
+
+            <div class="stamp stamp-direct" data-i18n="hero_stamp">
+              ДОНАТ ХУДОЖНИКУ НАПРЯМУЮ
+            </div>
+
+            <h1 class="hero-title" id="hero-headline">
+              ГОРОД — ЭТО <span class="hero-highlight">ГАЛЕРЕЯ</span> ПОД ОТКРЫТЫМ НЕБОМ
+            </h1>
+
+            <p class="hero-subtitle" data-i18n="hero_subtitle">
+              Интерактивный архив муралов и уличного искусства Казахстана. Находи легендарные фасады на карте, гуляй по кураторским арт-маршрутам и поддерживай уличных художников прямыми донатами в тенге без галерей и посредников.
+            </p>
+
+            <div class="hero-cta-group">
+              <button type="button" class="btn-brutal btn-acid" onclick="navigateTo('map')" data-i18n="hero_cta_map">
+                Открыть карту →
+              </button>
+              <button type="button" class="btn-brutal btn-dark" onclick="openDonateModal()" data-i18n="hero_cta_donate">
+                Задонатить художнику ₸
+              </button>
+            </div>
+          </div>
+
+          <div class="hero-stats-strip" id="home-stats-strip"></div>
+        </div>
+
+        <!-- INTERACTIVE KAZAKHSTAN MINI-MAP PREVIEW -->
+        <aside class="kz-radar-card">
+          <div class="radar-header">
+            <span>RADAR // KZ_STREET_GRID</span>
+            <span id="radar-live-coords">N 43.2389° E 76.8897°</span>
+          </div>
+
+          <div class="radar-canvas" id="kz-radar-canvas">
+            <!-- Stylized Kazakhstan Tactical Outline SVG -->
+            <svg viewBox="0 0 400 260" width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true">
+              <polygon
+                points="28,118 68,85 112,92 145,58 195,46 255,44 302,68 362,88 378,125 348,158 310,185 256,214 218,225 185,195 135,195 95,168 55,175 22,148"
+                fill="rgba(233, 255, 31, 0.06)"
+                stroke="#E9FF1F"
+                stroke-width="2"
+                stroke-dasharray="6 4"
+              />
+              <!-- Grid Crosshairs -->
+              <line x1="200" y1="0" x2="200" y2="260" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+              <line x1="0" y1="130" x2="400" y2="130" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+              <circle cx="200" cy="130" r="78" fill="none" stroke="rgba(233,255,31,0.18)" stroke-width="1" />
+            </svg>
+
+            <!-- Blinking City Beacons (Clickable to jump to city on Leaflet map) -->
+            <div class="radar-pin" style="left: 63%; top: 34%;"
+                 onmouseenter="updateRadarCoords('N 51.1694° E 71.4491° // ASTANA')"
+                 onclick="jumpToCityOnMap('Astana')">
+              <div class="radar-dot"></div>
+              <div class="radar-label" id="radar-lbl-astana">АСТАНА [4]</div>
+            </div>
+
+            <div class="radar-pin" style="left: 73%; top: 75%;"
+                 onmouseenter="updateRadarCoords('N 43.2389° E 76.8897° // ALMATY')"
+                 onclick="jumpToCityOnMap('Almaty')">
+              <div class="radar-dot"></div>
+              <div class="radar-label" id="radar-lbl-almaty">АЛМАТЫ [5]</div>
+            </div>
+
+            <div class="radar-pin" style="left: 55%; top: 82%;"
+                 onmouseenter="updateRadarCoords('N 42.3417° E 69.5901° // SHYMKENT')"
+                 onclick="jumpToCityOnMap('Shymkent')">
+              <div class="radar-dot"></div>
+              <div class="radar-label" id="radar-lbl-shymkent">ШЫМКЕНТ [3]</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="font-mono" style="font-size:0.75rem; color:#BDBDB5;" data-i18n="radar_hint">
+              КЛИКНИ ПО ГОРОДУ ДЛЯ ПЕРЕХОДА НА КАРТУ
+            </span>
+            <button type="button" class="btn-brutal btn-acid btn-sm" onclick="navigateTo('routes')" data-i18n="btn_explore_routes">
+              Арт-маршруты →
+            </button>
+          </div>
+        </aside>
+      </section>
+
+      <!-- FRESH MURALS SECTION -->
+      <section style="margin-bottom: 48px;">
+        <div class="section-header">
+          <div>
+            <span class="tag-brutal tag-dark">ARCHIVE // 2016–2026</span>
+            <h2 class="section-title" style="margin-top:6px;" data-i18n="sec_fresh_murals">Свежие муралы</h2>
+          </div>
+          <button type="button" class="btn-brutal btn-paper btn-sm" onclick="navigateTo('map')" data-i18n="btn_all_on_map">
+            Все объекты на карте →
+          </button>
+        </div>
+
+        <div class="grid-cards" id="home-fresh-murals"></div>
+      </section>
+
+      <!-- TOP ARTISTS SECTION -->
+      <section>
+        <div class="section-header">
+          <div>
+            <span class="tag-brutal tag-acid">CROWDFUNDING // ₸</span>
+            <h2 class="section-title" style="margin-top:6px;" data-i18n="sec_top_artists">Топ художников</h2>
+          </div>
+          <button type="button" class="btn-brutal btn-paper btn-sm" onclick="navigateTo('artists')" data-i18n="btn_all_artists">
+            Все художники →
+          </button>
+        </div>
+
+        <div class="grid-cards" id="home-top-artists"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       VIEW 2: INTERACTIVE LEAFLET MAP (КАРТА)
+       ======================================================================== -->
+  <section id="view-map" class="spa-view">
+    <div class="map-workspace">
+      <!-- Filter Toolbar -->
+      <div class="map-filter-bar">
+        <!-- City Filter -->
+        <div class="filter-group" id="map-city-filters">
+          <button type="button" class="chip-btn active" data-city="ALL" onclick="setMapCityFilter('ALL')" data-i18n="filter_all">Все</button>
+          <button type="button" class="chip-btn" data-city="Almaty" onclick="setMapCityFilter('Almaty')" data-i18n="city_almaty">Алматы</button>
+          <button type="button" class="chip-btn" data-city="Astana" onclick="setMapCityFilter('Astana')" data-i18n="city_astana">Астана</button>
+          <button type="button" class="chip-btn" data-city="Shymkent" onclick="setMapCityFilter('Shymkent')" data-i18n="city_shymkent">Шымкент</button>
+        </div>
+
+        <!-- Style Filter -->
+        <select class="select-brutal" id="map-style-select" style="width:auto; padding:6px 10px; font-family:var(--font-mono); font-size:0.78rem; font-weight:700;" onchange="setMapStyleFilter(this.value)">
+          <option value="ALL" data-i18n="style_all">Все стили</option>
+          <option value="street-art" data-i18n="style_street">Стрит-арт</option>
+          <option value="graffiti" data-i18n="style_graffiti">Граффити</option>
+          <option value="ethno-modern" data-i18n="style_ethno">Этно-модерн</option>
+          <option value="stencil" data-i18n="style_stencil">Трафарет</option>
+        </select>
+
+        <!-- Artist Filter -->
+        <select class="select-brutal" id="map-artist-select" style="width:auto; padding:6px 10px; font-family:var(--font-mono); font-size:0.78rem; font-weight:700;" onchange="setMapArtistFilter(this.value)">
+        </select>
+
+        <!-- Near Me Geolocation Button -->
+        <button type="button" class="btn-brutal btn-electro btn-sm" onclick="locateNearMe()" data-i18n="btn_near_me">
+          ◎ Рядом со мной
+        </button>
+
+        <span class="font-mono" id="map-counter-badge" style="margin-left:auto; font-size:0.78rem; font-weight:800;">
+          [ 12 ]
+        </span>
+      </div>
+
+      <!-- Map Canvas + Detail Sidebar / Mobile Bottom-Sheet -->
+      <div class="map-stage">
+        <div id="main-map"></div>
+
+        <!-- Active Route Floating Banner -->
+        <div class="route-banner" id="active-route-banner" style="display:none;">
+          <div>
+            <div class="font-mono" style="font-size:0.7rem; color:var(--acid);" data-i18n="route_active_lbl">АКТИВНЫЙ МАРШРУТ</div>
+            <div class="font-display" style="font-size:1rem;" id="active-route-title"></div>
+          </div>
+          <button type="button" class="btn-brutal btn-signal btn-sm" onclick="clearActiveRoute()" data-i18n="btn_clear_route">
+            Сбросить ✕
+          </button>
+        </div>
+
+        <!-- Mural Detail Sidebar (Desktop) / Bottom-Sheet Drawer (Mobile) -->
+        <aside class="mural-drawer hidden" id="mural-drawer" aria-live="polite">
+          <div class="drawer-top-bar">
+            <span id="drawer-coords-header">N 43.2535° E 76.9255°</span>
+            <button type="button" class="drawer-close-btn" onclick="closeMuralDrawer()">✕</button>
+          </div>
+          <div id="mural-drawer-content"></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       VIEW 3: ARTISTS DIRECTORY (ХУДОЖНИКИ / СУРЕТШІЛЕР)
+       ======================================================================== -->
+  <section id="view-artists" class="spa-view">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="tag-brutal tag-dark">CREATORS // DIRECT SUPPORT</span>
+          <h2 class="section-title" style="margin-top:6px;" data-i18n="nav_artists">Художники</h2>
+        </div>
+      </div>
+
+      <!-- Search, City Filter & Sort Controls -->
+      <div class="card-brutal" style="padding:16px; margin-bottom:24px; background:var(--concrete); display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+        <input type="text" class="input-brutal" id="artist-search-input" oninput="renderArtistsView()" placeholder="Поиск по имени или @нику..." />
+
+        <select class="select-brutal" id="artist-city-filter" onchange="renderArtistsView()">
+          <option value="ALL" data-i18n="filter_all_cities">Все города</option>
+          <option value="Almaty" data-i18n="city_almaty">Алматы</option>
+          <option value="Astana" data-i18n="city_astana">Астана</option>
+          <option value="Shymkent" data-i18n="city_shymkent">Шымкент</option>
+        </select>
+
+        <select class="select-brutal" id="artist-sort-select" onchange="renderArtistsView()">
+          <option value="raised_desc" data-i18n="sort_raised">Сортировка: По сумме сборов ↓</option>
+          <option value="progress_desc" data-i18n="sort_progress">Сортировка: По прогрессу цели ↓</option>
+        </select>
+      </div>
+
+      <div class="grid-cards" id="artists-directory-grid"></div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       VIEW 4: CURATED WALKING ROUTES (МАРШРУТЫ / МАРШРУТТАР)
+       ======================================================================== -->
+  <section id="view-routes" class="spa-view">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="tag-brutal tag-acid">URBAN WALKS // GPS GUIDES</span>
+          <h2 class="section-title" style="margin-top:6px;" data-i18n="nav_routes">Маршруты</h2>
+        </div>
+      </div>
+
+      <div class="grid-cards" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));" id="routes-list-grid"></div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       VIEW 5: ADD MURAL FORM (ДОБАВИТЬ / МУРАЛ ҚОСУ)
+       ======================================================================== -->
+  <section id="view-add" class="spa-view">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="tag-brutal tag-signal">OPEN ARCHIVE // CROWDSOURCE</span>
+          <h2 class="section-title" style="margin-top:6px;" data-i18n="add_page_title">Добавить мурал на карту</h2>
+        </div>
+      </div>
+
+      <div class="add-grid">
+        <!-- Form Column -->
+        <form class="card-brutal" style="padding:22px;" id="add-mural-form" onsubmit="handleAddMuralSubmit(event)">
+          <div id="add-form-error" style="display:none; background:var(--signal); color:var(--white); border:2px solid var(--asphalt); padding:10px; font-weight:700; margin-bottom:14px;"></div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div>
+              <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_city">ГОРОД *</label>
+              <select class="select-brutal" id="add-city" onchange="centerPickerMapByCity(this.value)">
+                <option value="Almaty" data-i18n="city_almaty">Алматы</option>
+                <option value="Astana" data-i18n="city_astana">Астана</option>
+                <option value="Shymkent" data-i18n="city_shymkent">Шымкент</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_style">СТИЛЬ *</label>
+              <select class="select-brutal" id="add-style">
+                <option value="street-art" data-i18n="style_street">Стрит-арт</option>
+                <option value="graffiti" data-i18n="style_graffiti">Граффити</option>
+                <option value="ethno-modern" data-i18n="style_ethno">Этно-модерн</option>
+                <option value="stencil" data-i18n="style_stencil">Трафарет</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_mural_title">НАЗВАНИЕ МУРАЛА *</label>
+            <input type="text" class="input-brutal" id="add-title" required placeholder="Например: Космонавт над Алатау" />
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div>
+              <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_artist_name">АВТОР / НИКНЕЙМ *</label>
+              <input type="text" class="input-brutal" id="add-artist" required placeholder="@artist_kz" />
+            </div>
+            <div>
+              <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_address">АДРЕС ФАСАДА *</label>
+              <input type="text" class="input-brutal" id="add-address" required placeholder="ул. Панфилова, 110" />
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_desc">ИСТОРИЯ / ОПИСАНИЕ *</label>
+            <textarea class="textarea-brutal" id="add-desc" rows="3" required placeholder="Расскажите о смысле работы, годе создания и состоянии стены..."></textarea>
+          </div>
+
+          <div style="margin-bottom:18px;">
+            <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="lbl_photo">ФОТО МУРАЛА (ИЛИ ВЫБЕРИТЕ ПРЕСЕТ)</label>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+              <input type="file" id="add-photo-file" accept="image/*" class="input-brutal" style="flex:1;" onchange="handlePhotoFileChange(event)" />
+              <select class="select-brutal" id="add-art-preset" style="width:auto;" onchange="updateAddPreviewPreset(this.value)">
+                <option value="ethno">Пресет: Этно-орнамент</option>
+                <option value="cosmo">Пресет: Космо-трафарет</option>
+                <option value="graffiti">Пресет: Дикий стиль</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-brutal btn-acid" style="width:100%;" data-i18n="btn_submit_mural">
+            Опубликовать на модерацию →
+          </button>
+        </form>
+
+        <!-- Coordinate Picker & B&W Preview Column -->
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div class="card-brutal" style="padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span class="font-mono" style="font-size:0.78rem; font-weight:800;" data-i18n="lbl_pick_coords">КЛИКНИ ПО КАРТЕ ДЛЯ ВЫБОРА ТОЧКИ:</span>
+              <span class="tag-brutal tag-acid" id="picker-coords-display">43.2389, 76.8897</span>
+            </div>
+            <div id="picker-map" class="picker-map-box"></div>
+          </div>
+
+          <div class="card-brutal" style="padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span class="font-mono" style="font-size:0.78rem; font-weight:800;" data-i18n="lbl_preview_bw">ПРЕДПРОСМОТР КАРТОЧКИ (Ч/Б → ЦВЕТ НА HOVER):</span>
+              <span class="stamp stamp-signal" style="font-size:0.7rem;" data-i18n="status_moderation">НА МОДЕРАЦИИ</span>
+            </div>
+            <div class="mural-art-frame" id="add-preview-frame" style="border: 2px solid var(--asphalt);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       VIEW 6: ABOUT / MANIFESTO & FAQ (О ПРОЕКТЕ / ЖОБА ТУРАЛЫ)
+       ======================================================================== -->
+  <section id="view-about" class="spa-view">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="tag-brutal tag-dark">MANIFESTO // TRANSPARENCY</span>
+          <h2 class="section-title" style="margin-top:6px;" data-i18n="nav_about">О проекте / FAQ</h2>
+        </div>
+      </div>
+
+      <!-- Manifesto & 95/5 Fee Transparency Grid -->
+      <div class="hero-grid" style="margin-bottom: 36px;">
+        <div class="card-brutal" style="padding:26px;">
+          <div class="stamp stamp-direct" style="margin-bottom:14px;" data-i18n="about_badge">БЕЗ ГАЛЕРЕЙ И ПОСРЕДНИКОВ</div>
+          <h3 class="font-display" style="font-size:2rem; margin:0 0 14px;" data-i18n="about_manifesto_title">
+            УЛИЧНОЕ ИСКУССТВО ПРИНАДЛЕЖИТ ГОРОДУ И ЕГО АВТОРАМ
+          </h3>
+          <p style="font-size:1.02rem; margin:0 0 14px;" data-i18n="about_manifesto_p1">
+            MuralMap (muralmap.kz) — независимая цифровая карта стрит-арта Казахстана. Муралы на фасадах Алматы, Астаны и Шымкента формируют визуальный код наших улиц, но часто исчезают под слоем коммунальной краски или остаются анонимными.
+          </p>
+          <p style="font-size:1.02rem; margin:0;" data-i18n="about_manifesto_p2">
+            Мы создали прямой мост между горожанами, туристами и уличными художниками: сканируй город, изучай историю стен и отправляй донат в тенге прямо на краску, валики и новые фасады.
+          </p>
+        </div>
+
+        <div class="card-brutal" style="padding:26px; background:var(--asphalt); color:var(--paper);">
+          <span class="tag-brutal tag-acid" style="margin-bottom:12px;">FEE MODEL // 95% / 5%</span>
+          <h3 class="font-display" style="font-size:1.85rem; margin:0 0 16px; color:var(--acid);" data-i18n="about_fee_title">
+            ПРОЗРАЧНАЯ ЭКОНОМИКА ДОНАТОВ
+          </h3>
+
+          <div style="border:2px solid var(--paper); padding:14px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-weight:800; margin-bottom:8px;">
+              <span style="color:var(--acid);" data-i18n="fee_artist_lbl">95% — ХУДОЖНИКУ НАПРЯМУЮ</span>
+              <span style="color:var(--signal);" data-i18n="fee_platform_lbl">5% — ПЛАТФОРМА</span>
+            </div>
+            <div style="display:flex; height:24px; border:2px solid var(--paper);">
+              <div style="width:95%; background:var(--acid);"></div>
+              <div style="width:5%; background:var(--signal);"></div>
+            </div>
+          </div>
+
+          <p style="font-size:0.94rem; color:#d8d8d2; margin:0 0 18px;" data-i18n="about_fee_desc">
+            95% от каждого перевода поступает напрямую верифицированному автору на закупку фасадной краски, аэрозолей и аренду автовышки. 5% покрывают хостинг карт, эквайринг и модерацию архива.
+          </p>
+
+          <button type="button" class="btn-brutal btn-acid" onclick="openDonateModal()" data-i18n="btn_test_donate">
+            Протестировать демо-донат ₸
+          </button>
+        </div>
+      </div>
+
+      <!-- Bilingual FAQ Accordion -->
+      <h3 class="font-display" style="font-size:1.6rem; margin-bottom:14px;" data-i18n="faq_heading">
+        ЧАСТО ЗАДАВАЕМЫЕ ВОПРОСЫ (FAQ)
+      </h3>
+      <div id="faq-accordion"></div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       MODAL 1: DEMO DONATION MODAL (В ТЕНГЕ ₸)
+       ======================================================================== -->
+  <div class="modal-backdrop" id="donate-modal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="font-display" style="font-size:1.25rem;" data-i18n="donate_modal_title">
+          ПРЯМОЙ ДОНАТ ХУДОЖНИКУ (ДЕМО)
+        </span>
+        <button type="button" class="drawer-close-btn" onclick="closeDonateModal()">✕</button>
+      </div>
+
+      <!-- Step 1: Donation Form -->
+      <div class="modal-body" id="donate-form-step">
+        <div style="margin-bottom:14px;">
+          <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="donate_recipient_lbl">
+            ПОЛУЧАТЕЛЬ (ХУДОЖНИК):
+          </label>
+          <select class="select-brutal" id="donate-artist-select" onchange="onDonateArtistChange()"></select>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:4px;" data-i18n="donate_mural_lbl">
+            ПРИВЯЗКА К МУРАЛУ (ОПЦИОНАЛЬНО):
+          </label>
+          <select class="select-brutal" id="donate-mural-select"></select>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label class="font-mono" style="display:block; font-size:0.78rem; font-weight:700; margin-bottom:6px;" data-i18n="donate_amount_lbl">
+            СУММА ПОДДЕРЖКИ (₸):
+          </label>
+          <div class="preset-grid">
+            <button type="button" class="preset-btn" data-amt="500" onclick="selectDonatePreset(500)">500 ₸</button>
+            <button type="button" class="preset-btn active" data-amt="1000" onclick="selectDonatePreset(1000)">1 000 ₸</button>
+            <button type="button" class="preset-btn" data-amt="2500" onclick="selectDonatePreset(2500)">2 500 ₸</button>
+            <button type="button" class="preset-btn" data-amt="5000" onclick="selectDonatePreset(5000)">5 000 ₸</button>
+          </div>
+          <input type="number" class="input-brutal font-mono" id="donate-amount-input" min="100" step="100" value="1000" oninput="updateFeeBreakdown()" />
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:14px;">
+          <div>
+            <label class="font-mono" style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:4px;" data-i18n="donate_sender_lbl">ВАШЕ ИМЯ:</label>
+            <input type="text" class="input-brutal" id="donate-sender-input" placeholder="Айдос" />
+          </div>
+          <div>
+            <label class="font-mono" style="display:block; font-size:0.75rem; font-weight:700; margin-bottom:4px;" data-i18n="donate_msg_lbl">СООБЩЕНИЕ АВТОРУ:</label>
+            <input type="text" class="input-brutal" id="donate-msg-input" placeholder="На краску для фасада!" />
+          </div>
+        </div>
+
+        <!-- Transparent 95% / 5% Fee Calculator -->
+        <div style="background:var(--concrete); border:2px solid var(--asphalt); padding:12px; margin-bottom:16px; font-family:var(--font-mono); font-size:0.82rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span data-i18n="calc_artist">Художнику (95%):</span>
+            <strong id="calc-artist-val">950 ₸</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#333;">
+            <span data-i18n="calc_platform">Комиссия платформы (5%):</span>
+            <span id="calc-platform-val">50 ₸</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-top:2px solid var(--asphalt); padding-top:6px; font-size:0.95rem;">
+            <strong data-i18n="calc_total">ИТОГО К ОПЛАТЕ:</strong>
+            <strong id="calc-total-val">1 000 ₸</strong>
+          </div>
+        </div>
+
+        <button type="button" class="btn-brutal btn-acid" style="width:100%;" onclick="submitDemoDonation()" data-i18n="btn_send_donation">
+          Отправить донат (Демо) →
+        </button>
+      </div>
+
+      <!-- Step 2: Success Receipt Screen -->
+      <div class="modal-body" id="donate-success-step" style="display:none; text-align:center;">
+        <div style="margin:12px 0 18px;">
+          <span class="stamp stamp-paid" data-i18n="stamp_paid">ОПЛАЧЕНО</span>
+        </div>
+        <h3 class="font-display" style="font-size:1.75rem; margin:0 0 8px;" data-i18n="receipt_thanks">
+          СПАСИБО ЗА ПОДДЕРЖКУ УЛИЧНОГО ИСКУССТВА!
+        </h3>
+        <p class="font-mono" style="font-size:0.85rem; margin:0 0 18px;" id="receipt-tx-id">TX #MM-90421</p>
+
+        <div style="background:var(--white); border:2px solid var(--asphalt); padding:14px; text-align:left; font-family:var(--font-mono); font-size:0.85rem; margin-bottom:18px;" id="receipt-details"></div>
+
+        <button type="button" class="btn-brutal btn-dark" style="width:100%;" onclick="closeDonateModal()" data-i18n="btn_done">
+          Готово
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: ARTIST PROFILE MODAL (ПРОФИЛЬ ХУДОЖНИКА)
+       ======================================================================== -->
+  <div class="modal-backdrop" id="artist-modal" role="dialog" aria-modal="true">
+    <div class="modal-box wide">
+      <div class="modal-header">
+        <span class="font-display" style="font-size:1.2rem;" id="artist-modal-header-title">ARTIST PROFILE</span>
+        <button type="button" class="drawer-close-btn" onclick="closeArtistModal()">✕</button>
+      </div>
+      <div class="modal-body" id="artist-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-banner" id="toast-banner" role="status"></div>
+
+  <!-- Leaflet.js Script (CDN) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    /* ==========================================================================
+       1. BILINGUAL DICTIONARY (RU / KZ)
+       ========================================================================== */
+    const I18N = {
+      RU: {
+        nav_home: 'Главная',
+        nav_map: 'Карта',
+        nav_artists: 'Художники',
+        nav_routes: 'Маршруты',
+        nav_add: 'Добавить',
+        nav_about: 'О проекте / FAQ',
+        btn_donate_short: 'Задонатить ₸',
+        hero_stamp: 'ДОНАТ ХУДОЖНИКУ НАПРЯМУЮ',
+        hero_headline_html: 'ГОРОД — ЭТО <span class="hero-highlight">ГАЛЕРЕЯ</span> ПОД ОТКРЫТЫМ НЕБОМ',
+        hero_subtitle: 'Интерактивный архив муралов и уличного искусства Казахстана. Находи легендарные фасады на карте, гуляй по кураторским арт-маршрутам и поддерживай уличных художников прямыми донатами в тенге без галерей и посредников.',
+        hero_cta_map: 'Открыть карту →',
+        hero_cta_donate: 'Задонатить художнику ₸',
+        stat_murals: 'Муралов на карте',
+        stat_artists: 'Уличных авторов',
+        stat_raised: 'Собрано напрямую',
+        radar_hint: 'КЛИКНИ ПО ГОРОДУ ДЛЯ ПЕРЕХОДА НА КАРТУ',
+        btn_explore_routes: 'Арт-маршруты →',
+        sec_fresh_murals: 'Свежие муралы',
+        btn_all_on_map: 'Все объекты на карте →',
+        sec_top_artists: 'Топ художников',
+        btn_all_artists: 'Все художники →',
+        filter_all: 'Все',
+        filter_all_cities: 'Все города',
+        city_almaty: 'Алматы',
+        city_astana: 'Астана',
+        city_shymkent: 'Шымкент',
+        style_all: 'Все стили',
+        style_street: 'Стрит-арт',
+        style_graffiti: 'Граффити',
+        style_ethno: 'Этно-модерн',
+        style_stencil: 'Трафарет',
+        btn_near_me: '◎ Рядом со мной',
+        route_active_lbl: 'АКТИВНЫЙ МАРШРУТ',
+        btn_clear_route: 'Сбросить ✕',
+        btn_support_author: 'Поддержать автора ₸',
+        btn_on_map: 'На карте',
+        btn_profile: 'Профиль',
+        btn_donate: 'Донат ₸',
+        sort_raised: 'Сортировка: По сумме сборов ↓',
+        sort_progress: 'Сортировка: По прогрессу цели ↓',
+        search_placeholder: 'Поиск по имени или @нику...',
+        goal_label: 'ЦЕЛЬ СБОРА:',
+        raised_of: 'из',
+        route_stops_count: 'точек',
+        btn_show_route_map: 'Показать маршрут на карте →',
+        add_page_title: 'Добавить мурал на карту',
+        lbl_city: 'ГОРОД *',
+        lbl_style: 'СТИЛЬ *',
+        lbl_mural_title: 'НАЗВАНИЕ МУРАЛА *',
+        lbl_artist_name: 'АВТОР / НИКНЕЙМ *',
+        lbl_address: 'АДРЕС ФАСАДА *',
+        lbl_desc: 'ИСТОРИЯ / ОПИСАНИЕ *',
+        lbl_photo: 'ФОТО МУРАЛА (ИЛИ ВЫБЕРИТЕ ПРЕСЕТ)',
+        btn_submit_mural: 'Опубликовать на модерацию →',
+        lbl_pick_coords: 'КЛИКНИ ПО КАРТЕ ДЛЯ ВЫБОРА ТОЧКИ:',
+        lbl_preview_bw: 'ПРЕДПРОСМОТР (Ч/Б → ЦВЕТ НА HOVER):',
+        status_moderation: 'НА МОДЕРАЦИИ',
+        status_verified: 'ВЕРИФИЦИРОВАН',
+        about_badge: 'БЕЗ ГАЛЕРЕЙ И ПОСРЕДНИКОВ',
+        about_manifesto_title: 'УЛИЧНОЕ ИСКУССТВО ПРИНАДЛЕЖИТ ГОРОДУ И ЕГО АВТОРАМ',
+        about_manifesto_p1: 'MuralMap (muralmap.kz) — независимая цифровая карта стрит-арта Казахстана. Муралы на фасадах Алматы, Астаны и Шымкента формируют визуальный код наших улиц, но часто исчезают под слоем коммунальной краски или остаются анонимными.',
+        about_manifesto_p2: 'Мы создали прямой мост между горожанами, туристами и уличными художниками: сканируй город, изучай историю стен и отправляй донат в тенге прямо на краску, валики и новые фасады.',
+        about_fee_title: 'ПРОЗРАЧНАЯ ЭКОНОМИКА ДОНАТОВ',
+        fee_artist_lbl: '95% — ХУДОЖНИКУ НАПРЯМУЮ',
+        fee_platform_lbl: '5% — ПЛАТФОРМА',
+        about_fee_desc: '95% от каждого перевода поступает напрямую верифицированному автору на закупку фасадной краски, аэрозолей и аренду автовышки. 5% покрывают хостинг карт, эквайринг и модерацию архива.',
+        btn_test_donate: 'Протестировать демо-донат ₸',
+        faq_heading: 'ЧАСТО ЗАДАВАЕМЫЕ ВОПРОСЫ (FAQ)',
+        donate_modal_title: 'ПРЯМОЙ ДОНАТ ХУДОЖНИКУ (ДЕМО)',
+        donate_recipient_lbl: 'ПОЛУЧАТЕЛЬ (ХУДОЖНИК):',
+        donate_mural_lbl: 'ПРИВЯЗКА К МУРАЛУ (ОПЦИОНАЛЬНО):',
+        donate_any_mural: 'Общий сбор художника (без привязки)',
+        donate_amount_lbl: 'СУММА ПОДДЕРЖКИ (₸):',
+        donate_sender_lbl: 'ВАШЕ ИМЯ:',
+        donate_msg_lbl: 'СООБЩЕНИЕ АВТОРУ:',
+        calc_artist: 'Художнику (95%):',
+        calc_platform: 'Комиссия платформы (5%):',
+        calc_total: 'ИТОГО К ОПЛАТЕ:',
+        btn_send_donation: 'Отправить донат (Демо) →',
+        stamp_paid: 'ОПЛАЧЕНО',
+        receipt_thanks: 'СПАСИБО ЗА ПОДДЕРЖКУ УЛИЧНОГО ИСКУССТВА!',
+        btn_done: 'Готово',
+        artist_works_title: 'РАБОТЫ ХУДОЖНИКА НА КАРТЕ:',
+        toast_copied: 'Координаты скопированы в буфер!',
+        toast_mural_added: 'Мурал добавлен со штампом «НА МОДЕРАЦИИ»!',
+        toast_near_me: 'Центрирование на вашей геопозиции (Алматы центр)'
+      },
+      KZ: {
+        nav_home: 'Басты бет',
+        nav_map: 'Карта',
+        nav_artists: 'Суретшілер',
+        nav_routes: 'Маршруттар',
+        nav_add: 'Мурал қосу',
+        nav_about: 'Жоба туралы / FAQ',
+        btn_donate_short: 'Донат жасау ₸',
+        hero_stamp: 'СУРЕТШІГЕ ТІКЕЛЕЙ ДОНАТ',
+        hero_headline_html: 'ҚАЛА — АШЫҚ АСПАН АСТЫНДАҒЫ <span class="hero-highlight">ГАЛЕРЕЯ</span>',
+        hero_subtitle: 'Қазақстанның стрит-арт және муралдар интерактивті мұрағаты. Картадан аңызға айналған қабырғаларды табыңыз, кураторлық арт-маршруттармен серуендеңіз және көше суретшілерін делдалсыз теңгемен тікелей қолдаңыз.',
+        hero_cta_map: 'Картаны ашу →',
+        hero_cta_donate: 'Суретшіге донат жасау ₸',
+        stat_murals: 'Картадағы муралдар',
+        stat_artists: 'Көше суретшілері',
+        stat_raised: 'Тікелей жиналды',
+        radar_hint: 'КАРТАҒА ӨТУ ҮШІН ҚАЛАНЫ БАСЫҢЫЗ',
+        btn_explore_routes: 'Арт-маршруттар →',
+        sec_fresh_murals: 'Жаңа муралдар',
+        btn_all_on_map: 'Барлық нысандар картада →',
+        sec_top_artists: 'Үздік суретшілер',
+        btn_all_artists: 'Барлық суретшілер →',
+        filter_all: 'Барлығы',
+        filter_all_cities: 'Барлық қалалар',
+        city_almaty: 'Алматы',
+        city_astana: 'Астана',
+        city_shymkent: 'Шымкент',
+        style_all: 'Барлық стильдер',
+        style_street: 'Стрит-арт',
+        style_graffiti: 'Граффити',
+        style_ethno: 'Этно-модерн',
+        style_stencil: 'Трафарет',
+        btn_near_me: '◎ Маған жақын',
+        route_active_lbl: 'БЕЛСЕНДІ МАРШРУТ',
+        btn_clear_route: 'Өшіру ✕',
+        btn_support_author: 'Авторды қолдау ₸',
+        btn_on_map: 'Картада',
+        btn_profile: 'Профиль',
+        btn_donate: 'Донат ₸',
+        sort_raised: 'Сұрыптау: Жиналған сома бойынша ↓',
+        sort_progress: 'Сұрыптау: Мақсат прогресі бойынша ↓',
+        search_placeholder: 'Аты немесе @ник бойынша іздеу...',
+        goal_label: 'ЖИНАУ МАҚСАТЫ:',
+        raised_of: '/',
+        route_stops_count: 'нүкте',
+        btn_show_route_map: 'Маршрутты картадан көру →',
+        add_page_title: 'Картаға жаңа мурал қосу',
+        lbl_city: 'ҚАЛА *',
+        lbl_style: 'СТИЛЬ *',
+        lbl_mural_title: 'МУРАЛ АТАУЫ *',
+        lbl_artist_name: 'АВТОР / НИКНЕЙМ *',
+        lbl_address: 'ҚАСБЕТ МЕКЕНЖАЙЫ *',
+        lbl_desc: 'ТАРИХЫ / СИПАТТАМАСЫ *',
+        lbl_photo: 'МУРАЛ ФОТОСЫ (НЕМЕСЕ ПРЕСЕТ ТАҢДАҢЫЗ)',
+        btn_submit_mural: 'Модерацияға жіберу →',
+        lbl_pick_coords: 'НҮКТЕНІ ТАҢДАУ ҮШІН КАРТАНЫ БАСЫҢЫЗ:',
+        lbl_preview_bw: 'АЛДЫН АЛА ҚАРАУ (АҚ-ҚАРА → ТҮСТІ HOVER):',
+        status_moderation: 'МОДЕРАЦИЯДА',
+        status_verified: 'РАСТАЛҒАН',
+        about_badge: 'ГАЛЕРЕЯЛАРСЫЗ ЖӘНЕ ДЕЛДАЛДАРСЫЗ',
+        about_manifesto_title: 'КӨШЕ ӨНЕРІ ҚАЛАҒА ЖӘНЕ ОНЫҢ АВТОРЛАРЫНА ТИЕСІЛІ',
+        about_manifesto_p1: 'MuralMap (muralmap.kz) — Қазақстан стрит-артының тәуелсіз цифрлық картасы. Алматы, Астана және Шымкент қабырғаларындағы муралдар қаламыздың визуалды кодын қалыптастырады, бірақ көбіне бояу астында қалып немесе авторы белгісіз күйде қалады.',
+        about_manifesto_p2: 'Біз қала тұрғындары, туристер және көше суретшілері арасында тікелей көпір құрдық: қаланы зерттеңіз, қабырғалар тарихын оқыңыз және бояу мен жаңа қасбеттерге теңгемен тікелей донат жіберіңіз.',
+        about_fee_title: 'АШЫҚ ДОНАТ ЭКОНОМИКАСЫ',
+        fee_artist_lbl: '95% — СУРЕТШІГЕ ТІКЕЛЕЙ',
+        fee_platform_lbl: '5% — ПЛАТФОРМА',
+        about_fee_desc: 'Әрбір аударымның 95%-ы қасбет бояуын, аэрозольдер сатып алуға және автомұнара жалдауға тікелей авторға түседі. 5%-ы карталар хостингі мен мұрағат модерациясын жабады.',
+        btn_test_donate: 'Демо-донатты тексеру ₸',
+        faq_heading: 'ЖИІ ҚОЙЫЛАТЫН СҰРАҚТАР (FAQ)',
+        donate_modal_title: 'СУРЕТШІГЕ ТІКЕЛЕЙ ДОНАТ (ДЕМО)',
+        donate_recipient_lbl: 'АЛУШЫ (СУРЕТШІ):',
+        donate_mural_lbl: 'МУРАЛҒА БАЙЛАНЫСТЫРУ (МІНДЕТТІ ЕМЕС):',
+        donate_any_mural: 'Суретшінің жалпы жинағы',
+        donate_amount_lbl: 'ҚОЛДАУ СОМАСЫ (₸):',
+        donate_sender_lbl: 'СІЗДІҢ АТЫҢЫЗ:',
+        donate_msg_lbl: 'АВТОРҒА ХАБАРЛАМА:',
+        calc_artist: 'Суретшіге (95%):',
+        calc_platform: 'Платформа комиссиясы (5%):',
+        calc_total: 'ТӨЛЕУГЕ БАРЛЫҒЫ:',
+        btn_send_donation: 'Донат жіберу (Демо) →',
+        stamp_paid: 'ТӨЛЕНДІ',
+        receipt_thanks: 'КӨШЕ ӨНЕРІН ҚОЛДАҒАНЫҢЫЗ ҮШІН РАҚМЕТ!',
+        btn_done: 'Дайын',
+        artist_works_title: 'СУРЕТШІНІҢ КАРТАДАҒЫ ЖҰМЫСТАРЫ:',
+        toast_copied: 'Координаттар буферге көшірілді!',
+        toast_mural_added: 'Мурал «МОДЕРАЦИЯДА» мөрімен қосылды!',
+        toast_near_me: 'Геолокация бойынша орталықтандыру (Алматы орталығы)'
+      }
+    };
+
+    /* ==========================================================================
+       2. PROCEDURAL STREET ART SVG GENERATOR (ZERO BROKEN IMAGES)
+       ========================================================================== */
+    function generateMuralSVG(artSeed, theme = 'ethno') {
+      const palettes = {
+        ethno: ['#E9FF1F', '#FF3B1D', '#2438FF', '#EFEFEA'],
+        stencil: ['#E9FF1F', '#EFEFEA', '#FF3B1D', '#BDBDB5'],
+        graffiti: ['#FF3B1D', '#E9FF1F', '#2438FF', '#FFFFFF'],
+        cosmo: ['#2438FF', '#E9FF1F', '#EFEFEA', '#FF3B1D'],
+        'street-art': ['#E9FF1F', '#2438FF', '#FF3B1D', '#EFEFEA']
+      };
+      const p = palettes[theme] || palettes.ethno;
+      const hash = Array.from(artSeed).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+      const shift = hash % 40;
+
+      return `
+        <svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <!-- Concrete Brick Wall Base -->
+          <rect width="640" height="400" fill="#181818"/>
+          <g stroke="#2a2a2a" stroke-width="2">
+            <line x1="0" y1="80" x2="640" y2="80"/>
+            <line x1="0" y1="160" x2="640" y2="160"/>
+            <line x1="0" y1="240" x2="640" y2="240"/>
+            <line x1="0" y1="320" x2="640" y2="320"/>
+            <line x1="${120 + shift}" y1="0" x2="${120 + shift}" y2="400"/>
+            <line x1="${320 - shift}" y1="0" x2="${320 - shift}" y2="400"/>
+            <line x1="${510 + shift}" y1="0" x2="${510 + shift}" y2="400"/>
+          </g>
+
+          <!-- Bold Street Art Geometric Blocks -->
+          <polygon points="0,400 220,90 410,400" fill="${p[2]}" opacity="0.9"/>
+          <rect x="${60 + shift}" y="48" width="230" height="230" fill="${p[0]}" stroke="#111" stroke-width="6"/>
+          <circle cx="${440 - shift}" cy="175" r="115" fill="${p[1]}" stroke="#111" stroke-width="6"/>
+
+          <!-- Kazakh Ethno-Modern Diamond & Horn Motif -->
+          <polygon points="320,65 415,160 320,255 225,160" fill="#111111" stroke="${p[3]}" stroke-width="5"/>
+          <polygon points="320,105 375,160 320,215 265,160" fill="${p[0]}"/>
+          <path d="M110,320 Q180,220 250,320 T390,320 T530,320" fill="none" stroke="${p[3]}" stroke-width="10"/>
+
+          <!-- Spray Halftone Dots & Stencil Stripes -->
+          <g fill="${p[0]}">
+            <circle cx="85" cy="345" r="5"/><circle cx="105" cy="345" r="5"/><circle cx="125" cy="345" r="5"/>
+            <circle cx="85" cy="365" r="5"/><circle cx="105" cy="365" r="5"/><circle cx="125" cy="365" r="5"/>
+          </g>
+          <rect x="455" y="34" width="145" height="34" fill="#111111" stroke="${p[0]}" stroke-width="3"/>
+          <text x="527" y="57" fill="${p[0]}" font-family="monospace" font-weight="bold" font-size="16" text-anchor="middle">KZ // WALL</text>
+        </svg>
+      `;
+    }
+
+    function generateAvatarSVG(handle, accent = '#E9FF1F') {
+      const initials = handle.replace('@', '').slice(0, 2).toUpperCase();
+      return `
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <rect width="120" height="120" fill="#111111"/>
+          <polygon points="0,120 120,20 120,120" fill="${accent}"/>
+          <rect x="14" y="14" width="92" height="92" fill="none" stroke="#EFEFEA" stroke-width="4"/>
+          <text x="60" y="72" fill="#EFEFEA" stroke="#111111" stroke-width="2" paint-order="stroke" font-family="Oswald, sans-serif" font-weight="700" font-size="40" text-anchor="middle">${initials}</text>
+        </svg>
+      `;
+    }
+
+    /* ==========================================================================
+       3. LOCALIZED MOCK DATABASE (KAZAKHSTAN MURALS, ARTISTS, ROUTES, TICKER)
+       ========================================================================== */
+    const STATE = {
+      lang: 'RU',
+      currentView: 'home',
+      mapFilters: {
+        city: 'ALL',
+        style: 'ALL',
+        artist: 'ALL'
+      },
+      selectedMuralId: null,
+      activeRouteId: null,
+      userLocation: null,
+      selectedDonatePreset: 1000,
+
+      artists: [
+        {
+          id: 'a1',
+          name: { RU: 'Паша Кас', KZ: 'Паша Кас' },
+          handle: '@pasha_cas',
+          city: 'Almaty',
+          accent: '#E9FF1F',
+          raised: 165000,
+          goal: 200000,
+          goalDesc: {
+            RU: 'Фасадная акриловая краска и аренда автовышки для новой серии в Алмалинском районе',
+            KZ: 'Алмалы ауданындағы жаңа серияға қасбеттік акрил бояуы мен автомұнара жалдау'
+          },
+          bio: {
+            RU: 'Концептуальный уличный художник из Алматы. Известен масштабными социальными трафаретами и диалогом с городской архитектурой.',
+            KZ: 'Алматылық концептуалды көше суретшісі. Ауқымды әлеуметтік трафареттерімен және қалалық сәулетпен диалогымен танымал.'
+          },
+          socials: ['Instagram', 'Telegram', 'Behance']
+        },
+        {
+          id: 'a2',
+          name: { RU: 'Айгерим Сыздыкова', KZ: 'Әйгерім Сыздықова' },
+          handle: '@aika_ethno',
+          city: 'Almaty',
+          accent: '#FF3B1D',
+          raised: 195000,
+          goal: 250000,
+          goalDesc: {
+            RU: 'Грунтовка и стойкие пигменты для этно-модерн серии «Құс жолы»',
+            KZ: '«Құс жолы» этно-модерн сериясына арналған төзімді пигменттер мен грунтовка'
+          },
+          bio: {
+            RU: 'Переосмысляет казахский орнамент, образы снежного барса и степной космогонии через геометрический нео-мурализм.',
+            KZ: 'Қазақ ою-өрнегін, қар барысы бейнесін және дала космогониясын геометриялық нео-мурализм арқылы жаңғыртады.'
+          },
+          socials: ['Instagram', 'Behance']
+        },
+        {
+          id: 'a3',
+          name: { RU: 'Repas Crew', KZ: 'Repas Crew' },
+          handle: '@repas_astana',
+          city: 'Astana',
+          accent: '#2438FF',
+          raised: 240000,
+          goal: 300000,
+          goalDesc: {
+            RU: 'Аэрозоли Montana Black и ветрозащитная экипировка для работы на правом берегу',
+            KZ: 'Оң жағалауда жұмыс істеуге арналған Montana Black аэрозольдері мен желден қорғайтын жабдық'
+          },
+          bio: {
+            RU: 'Команда монументалистов из Астаны, превращающая бетонные торцы Сарыарки в ветроустойчивые арт-манифесты.',
+            KZ: 'Сарыарқаның бетон қабырғаларын желге төзімді арт-манифесттерге айналдыратын астаналық монументалистер тобы.'
+          },
+          socials: ['Instagram', 'Telegram']
+        },
+        {
+          id: 'a4',
+          name: { RU: 'Данияр «QazaqTag»', KZ: 'Данияр «QazaqTag»' },
+          handle: '@qazaqtag',
+          city: 'Astana',
+          accent: '#E9FF1F',
+          raised: 115000,
+          goal: 150000,
+          goalDesc: {
+            RU: 'Широкие кэпы, валики и лак для уличной тюркской каллиграфии',
+            KZ: 'Көшедегі түркі каллиграфиясына арналған кең кэптер, білікшелер және лак'
+          },
+          bio: {
+            RU: 'Мастер каллиграффити из Астаны. Соединяет древнетюркские руны и ритм современного мегаполиса.',
+            KZ: 'Астаналық каллиграффити шебері. Көне түркі руналары мен заманауи мегаполис ырғағын ұштастырады.'
+          },
+          socials: ['Instagram', 'Telegram']
+        },
+        {
+          id: 'a5',
+          name: { RU: 'Мадина Бекова', KZ: 'Мадина Бекова' },
+          handle: '@madina_south',
+          city: 'Shymkent',
+          accent: '#FF3B1D',
+          raised: 135000,
+          goal: 160000,
+          goalDesc: {
+            RU: 'УФ-стойкие фасадные краски для проекта «Оңтүстік бояулары» в Шымкенте',
+            KZ: 'Шымкенттегі «Оңтүстік бояулары» жобасына арналған күн сәулесіне төзімді бояулар'
+          },
+          bio: {
+            RU: 'Художница из Шымкента. Работает с насыщенной палитрой гранатовых садов, солнца Сайрама и южного модернизма.',
+            KZ: 'Шымкенттік суретші. Анар бақтары, Сайрам күні және оңтүстік модернизмнің қанық палитрасымен жұмыс істейді.'
+          },
+          socials: ['Instagram', 'Behance']
+        },
+        {
+          id: 'a6',
+          name: { RU: 'Тимур «SyrStreet»', KZ: 'Тимур «SyrStreet»' },
+          handle: '@syr_street',
+          city: 'Shymkent',
+          accent: '#2438FF',
+          raised: 75000,
+          goal: 120000,
+          goalDesc: {
+            RU: 'Пластик для многослойных трафаретов и фасадные валики',
+            KZ: 'Көпқабатты трафареттерге арналған пластик және қасбет білікшелері'
+          },
+          bio: {
+            RU: 'Индустриальный трафаретчик и график из Шымкента, исследующий эстетику Шелкового пути и ретро-футуризма.',
+            KZ: 'Жібек жолы эстетикасы мен ретро-футуризмді зерттейтін шымкенттік индустриалды трафаретші және график.'
+          },
+          socials: ['Telegram', 'Instagram']
+        }
+      ],
+
+      murals: [
+        {
+          id: 'm1',
+          city: 'Almaty',
+          style: 'stencil',
+          year: 2016,
+          lat: 43.2535,
+          lng: 76.9255,
+          artistId: 'a1',
+          artistHandle: '@pasha_cas',
+          status: 'verified',
+          title: { RU: 'Пляшущие человечки', KZ: 'Биші адамдар' },
+          address: { RU: 'ул. Толе би / ул. Масанчи', KZ: 'Төле би көш. / Масанчи көш.' },
+          description: {
+            RU: 'Знаковый алматинский мурал на брандмауэре пятиэтажки, вдохновленный визуальным языком Кита Харинга. Работа поднимает тему экологии мегаполиса и права горожан на чистый воздух.',
+            KZ: 'Кит Харингтің визуалды тілінен шабыт алған бес қабатты үйдің қабырғасындағы әйгілі алматылық мурал. Туынды мегаполис экологиясы мен тұрғындардың таза ауаға құқығын көтереді.'
+          }
+        },
+        {
+          id: 'm2',
+          city: 'Almaty',
+          style: 'ethno-modern',
+          year: 2022,
+          lat: 43.2618,
+          lng: 76.9452,
+          artistId: 'a2',
+          artistHandle: '@aika_ethno',
+          status: 'verified',
+          title: { RU: 'Снежный барс над Алатау', KZ: 'Алатау үстіндегі қар барысы' },
+          address: { RU: 'пр. Жибек Жолы (Арбат) / ул. Панфилова', KZ: 'Жібек Жолы даңғ. (Арбат) / Панфилов көш.' },
+          description: {
+            RU: 'Геометрический силуэт ирбиса, сотканный из традиционных сакских орнаментов и пиков Заилийского Алатау на пешеходной оси Алматы.',
+            KZ: 'Алматының жаяу жүргіншілер осіндегі дәстүрлі сақ ою-өрнектері мен Іле Алатауы шыңдарынан өрілген барыстың геометриялық сұлбасы.'
+          }
+        },
+        {
+          id: 'm3',
+          city: 'Almaty',
+          style: 'ethno-modern',
+          year: 2023,
+          lat: 43.2584,
+          lng: 76.9448,
+          artistId: 'a2',
+          artistHandle: '@aika_ethno',
+          status: 'verified',
+          title: { RU: 'Дыхание степи', KZ: 'Дала тынысы' },
+          address: { RU: 'ул. Панфилова / ул. Гоголя', KZ: 'Панфилов көш. / Гоголь көш.' },
+          description: {
+            RU: 'Контрастная композиция на пересечении исторических улиц центра Алматы, объединяющая кочевые символы свободы с ритмом уличной графики.',
+            KZ: 'Алматы орталығындағы тарихи көшелердің қиылысындағы көшпенділердің еркіндік рәміздері мен көше графикасының ырғағын біріктіретін контрасты композиция.'
+          }
+        },
+        {
+          id: 'm4',
+          city: 'Almaty',
+          style: 'street-art',
+          year: 2021,
+          lat: 43.2579,
+          lng: 76.9332,
+          artistId: 'a1',
+          artistHandle: '@pasha_cas',
+          status: 'verified',
+          title: { RU: 'Алма-Ата: код 727', KZ: 'Алматы: 727 коды' },
+          address: { RU: 'ул. Гоголя / пр. Сейфуллина', KZ: 'Гоголь көш. / Сейфуллин даңғ.' },
+          description: {
+            RU: 'Посвящение модернистской архитектуре Алматы 1970-х годов, арычной системе и теплому свету южных дворов.',
+            KZ: '1970 жылдардағы Алматының модернистік сәулетіне, арық жүйесіне және оңтүстік аулалардың жылы жарығына арналған туынды.'
+          }
+        },
+        {
+          id: 'm5',
+          city: 'Almaty',
+          style: 'street-art',
+          year: 2020,
+          lat: 43.2492,
+          lng: 76.9338,
+          artistId: 'a1',
+          artistHandle: '@pasha_cas',
+          status: 'verified',
+          title: { RU: 'Ночной трамвай №4', KZ: 'Түнгі №4 трамвай' },
+          address: { RU: 'пр. Сейфуллина / ул. Кабанбай батыра', KZ: 'Сейфуллин даңғ. / Қабанбай батыр көш.' },
+          description: {
+            RU: 'Ностальгический уличный плакат в память о легендарных алматинских трамваях, курсировавших по старому центру города.',
+            KZ: 'Қаланың ескі орталығымен жүрген аңызға айналған алматылық трамвайларды еске алуға арналған ностальгиялық көше плакаты.'
+          }
+        },
+        {
+          id: 'm6',
+          city: 'Astana',
+          style: 'street-art',
+          year: 2021,
+          lat: 51.1668,
+          lng: 71.4235,
+          artistId: 'a3',
+          artistHandle: '@repas_astana',
+          status: 'verified',
+          title: { RU: 'Ветры Сарыарки', KZ: 'Сарыарқа желдері' },
+          address: { RU: 'пр. Республики, 34', KZ: 'Республика даңғ., 34' },
+          description: {
+            RU: 'Монументальная роспись высотой в девять этажей на главной артерии правого берега Астаны. Динамические линии передают движение степного ветра.',
+            KZ: 'Астананың оң жағалауындағы басты даңғылда орналасқан тоғыз қабатты монументалды кескіндеме. Динамикалық сызықтар дала желінің қозғалысын береді.'
+          }
+        },
+        {
+          id: 'm7',
+          city: 'Astana',
+          style: 'graffiti',
+          year: 2023,
+          lat: 51.1642,
+          lng: 71.4288,
+          artistId: 'a4',
+          artistHandle: '@qazaqtag',
+          status: 'verified',
+          title: { RU: 'Руны будущего', KZ: 'Болашақ руналары' },
+          address: { RU: 'ул. Кенесары, 42', KZ: 'Кенесары көш., 42' },
+          description: {
+            RU: 'Каллиграффити-полотно, где орхоно-енисейские рунические знаки переплетаются с нео-бруталистской типографикой.',
+            KZ: 'Орхон-Енисей руналық таңбалары нео-бруталистік типографикамен өрілген каллиграффити кенебі.'
+          }
+        },
+        {
+          id: 'm8',
+          city: 'Astana',
+          style: 'street-art',
+          year: 2022,
+          lat: 51.1695,
+          lng: 71.4192,
+          artistId: 'a3',
+          artistHandle: '@repas_astana',
+          status: 'verified',
+          title: { RU: 'Степной космодром', KZ: 'Дала ғарыш айлағы' },
+          address: { RU: 'ул. Бейбитшилик, 18', KZ: 'Бейбітшілік көш., 18' },
+          description: {
+            RU: 'Оммаж космической истории Казахстана: геометрические орбиты, спутники и кочевник, смотрящий к звездам.',
+            KZ: 'Қазақстанның ғарыштық тарихына құрмет: геометриялық орбиталар, жер серіктері және жұлдыздарға қараған көшпенді.'
+          }
+        },
+        {
+          id: 'm9',
+          city: 'Astana',
+          style: 'ethno-modern',
+          year: 2024,
+          lat: 51.1285,
+          lng: 71.4305,
+          artistId: 'a4',
+          artistHandle: '@qazaqtag',
+          status: 'verified',
+          title: { RU: 'Мәңгілік ырғақ', KZ: 'Мәңгілік ырғақ' },
+          address: { RU: 'пр. Мәңгілік Ел, 20', KZ: 'Мәңгілік Ел даңғ., 20' },
+          description: {
+            RU: 'Диалог левого и правого берегов столицы: строгие модульные ритмы современной Астаны и ритм домбрового кюя.',
+            KZ: 'Елорданың сол және оң жағалауларының диалогы: заманауи Астананың қатаң модульдік ырғақтары мен домбыра күйінің екпіні.'
+          }
+        },
+        {
+          id: 'm10',
+          city: 'Shymkent',
+          style: 'ethno-modern',
+          year: 2022,
+          lat: 42.3185,
+          lng: 69.5962,
+          artistId: 'a5',
+          artistHandle: '@madina_south',
+          status: 'verified',
+          title: { RU: 'Солнце Сайрама', KZ: 'Сайрам күні' },
+          address: { RU: 'пр. Тауке хана, 45', KZ: 'Тәуке хан даңғ., 45' },
+          description: {
+            RU: 'Яркий южный мурал, наполненный солнечной охрой, тюльпанами предгорий Каратау и геометрией древнего оазиса.',
+            KZ: 'Күн сәулелі охраға, Қаратау бөктерінің қызғалдақтарына және көне оазис геометриясына толы жарқын оңтүстік муралы.'
+          }
+        },
+        {
+          id: 'm11',
+          city: 'Shymkent',
+          style: 'stencil',
+          year: 2023,
+          lat: 42.3152,
+          lng: 69.5918,
+          artistId: 'a6',
+          artistHandle: '@syr_street',
+          status: 'verified',
+          title: { RU: 'Шелковый трафик', KZ: 'Жібек трафигі' },
+          address: { RU: 'ул. Бейбитшилик / Арбат Шымкента', KZ: 'Бейбітшілік көш. / Шымкент Арбаты' },
+          description: {
+            RU: 'Многослойный индустриальный трафарет о караванных путях Великого Шелкового пути, превратившихся в современные цифровые потоки.',
+            KZ: 'Заманауи цифрлық ағындарға айналған Ұлы Жібек жолының керуен бағыттары туралы көпқабатты индустриалды трафарет.'
+          }
+        },
+        {
+          id: 'm12',
+          city: 'Shymkent',
+          style: 'graffiti',
+          year: 2024,
+          lat: 42.3118,
+          lng: 69.5895,
+          artistId: 'a5',
+          artistHandle: '@madina_south',
+          status: 'verified',
+          title: { RU: 'Гранат и бетон', KZ: 'Анар мен бетон' },
+          address: { RU: 'пл. Ордабасы / ул. Казыбек би', KZ: 'Ордабасы алаңы / Қазыбек би көш.' },
+          description: {
+            RU: 'Символ плодородия и южного гостеприимства: крупноформатные зерна граната, прорывающиеся сквозь серый бетон.',
+            KZ: 'Молшылық пен оңтүстік қонақжайлылығының символы: сұр бетонды жарып шыққан ірі анар дәндері.'
+          }
+        }
+      ],
+
+      routes: [
+        {
+          id: 'r1',
+          city: 'Almaty',
+          distance: '2.8 км',
+          duration: { RU: '1 ч 30 мин', KZ: '1 сағ 30 мин' },
+          title: {
+            RU: 'Золотой квадрат Алматы: 4 мурала за 1.5 часа',
+            KZ: 'Алматының Алтын шаршысы: 1.5 сағатта 4 мурал'
+          },
+          description: {
+            RU: 'Пешеходный маршрут по тенистым бульварам Арбата, Панфилова, Гоголя и Сейфуллина. Идеально для знакомства с алматинской школой уличного искусства.',
+            KZ: 'Арбат, Панфилов, Гоголь және Сейфуллин көшелерінің саялы бульварларымен жаяу серуен. Алматы көше өнері мектебімен танысуға таптырмас бағыт.'
+          },
+          muralIds: ['m2', 'm3', 'm4', 'm5']
+        },
+        {
+          id: 'r2',
+          city: 'Astana',
+          distance: '2.2 км',
+          duration: { RU: '1 ч 10 мин', KZ: '1 сағ 10 мин' },
+          title: {
+            RU: 'Правый берег Астаны: уличный код',
+            KZ: 'Астананың оң жағалауы: көше коды'
+          },
+          description: {
+            RU: 'Прогулка по историческому центру столицы от Бейбитшилик до проспекта Республики и улицы Кенесары. Масштабные торцы и тюркское каллиграффити.',
+            KZ: 'Бейбітшілік көшесінен Республика даңғылы мен Кенесары көшесіне дейінгі елорданың тарихи орталығымен серуен. Ауқымды қасбеттер мен түркі каллиграффитиі.'
+          },
+          muralIds: ['m8', 'm6', 'm7']
+        },
+        {
+          id: 'r3',
+          city: 'Shymkent',
+          distance: '1.9 км',
+          duration: { RU: '55 мин', KZ: '55 мин' },
+          title: {
+            RU: 'Шымкент: краски юга',
+            KZ: 'Шымкент: оңтүстік бояулары'
+          },
+          description: {
+            RU: 'Насыщенный арт-маршрут от проспекта Тауке хана через шымкентский Арбат к площади Ордабасы.',
+            KZ: 'Тәуке хан даңғылынан Шымкент Арбаты арқылы Ордабасы алаңына дейінгі қанық арт-маршрут.'
+          },
+          muralIds: ['m10', 'm11', 'm12']
+        }
+      ],
+
+      donations: [
+        {
+          sender: 'Айдос',
+          artistHandle: '@pasha_cas',
+          amount: 2500,
+          message: { RU: 'На краску для фасада', KZ: 'Қасбет бояуына' }
+        },
+        {
+          sender: 'Динара',
+          artistHandle: '@aika_ethno',
+          amount: 5000,
+          message: { RU: 'Барс на Арбате — топ!', KZ: 'Арбаттағы барыс — керемет!' }
+        },
+        {
+          sender: 'Руслан',
+          artistHandle: '@repas_astana',
+          amount: 3000,
+          message: { RU: 'Правый берег сила', KZ: 'Оң жағалау алға!' }
+        },
+        {
+          sender: 'Меруерт',
+          artistHandle: '@madina_south',
+          amount: 1500,
+          message: { RU: 'Рахмет за яркий Шымкент', KZ: 'Жарқын Шымкент үшін рақмет' }
+        }
+      ],
+
+      faqs: [
+        {
+          q: {
+            RU: 'Как работают прямые донаты художникам?',
+            KZ: 'Суретшілерге тікелей донаттар қалай жұмыс істейді?'
+          },
+          a: {
+            RU: 'Вы выбираете художника или конкретный мурал, указываете сумму в тенге (₸) и отправляете перевод. 95% суммы идет напрямую автору на краску и материалы, 5% — на поддержку серверов и карт MuralMap.',
+            KZ: 'Сіз суретшіні немесе нақты муралды таңдайсыз, соманы теңгемен (₸) көрсетесіз және аударым жасайсыз. Соманың 95%-ы бояу мен материалдарға тікелей авторға, 5%-ы MuralMap серверлері мен карталарын қолдауға кетеді.'
+          }
+        },
+        {
+          q: {
+            RU: 'Как добавить новый мурал на карту Казахстана?',
+            KZ: 'Қазақстан картасына жаңа муралды қалай қосуға болады?'
+          },
+          a: {
+            RU: 'Перейдите во вкладку «Добавить», отметьте точную координату кликом по мини-карте, укажите автора, адрес и описание. Точка сразу появится на карте со статусом «НА МОДЕРАЦИИ».',
+            KZ: '«Мурал қосу» қойындысына өтіңіз, мини-картаны басу арқылы нақты координатты белгілеңіз, авторды, мекенжайды және сипаттаманы көрсетіңіз. Нүкте картада бірден «МОДЕРАЦИЯДА» мәртебесімен пайда болады.'
+          }
+        },
+        {
+          q: {
+            RU: 'Что такое кураторские арт-маршруты?',
+            KZ: 'Кураторлық арт-маршруттар дегеніміз не?'
+          },
+          a: {
+            RU: 'Это готовые пешеходные треки по Алматы, Астане и Шымкенту с расчетом дистанции и времени. Нажмите «Показать маршрут на карте», чтобы увидеть линию пути и пронумерованные точки 01, 02, 03.',
+            KZ: 'Бұл қашықтық пен уақыт есептелген Алматы, Астана және Шымкент бойынша дайын жаяу бағыттар. Жол сызығын және 01, 02, 03 нөмірленген нүктелерді көру үшін «Маршрутты картадан көру» түймесін басыңыз.'
+          }
+        },
+        {
+          q: {
+            RU: 'Как художнику подключить сбор средств на новый фасад?',
+            KZ: 'Суретші жаңа қасбетке қаражат жинауды қалай қоса алады?'
+          },
+          a: {
+            RU: 'Авторы проходят верификацию через Instagram или Telegram портфолио, после чего в их профиле активируется целевой прогресс-бар сбора в тенге.',
+            KZ: 'Авторлар Instagram немесе Telegram портфолиосы арқылы верификациядан өтеді, содан кейін олардың профилінде теңгемен мақсатты жинау прогресс-бары іске қосылады.'
+          }
+        }
+      ]
+    };
+
+    /* ==========================================================================
+       4. HELPER UTILITIES (LOCALIZATION, FORMATTING, BATTERY BAR, TOAST)
+       ========================================================================== */
+    function t(key) {
+      return (I18N[STATE.lang] && I18N[STATE.lang][key]) || I18N.RU[key] || key;
+    }
+
+    function loc(obj) {
+      if (!obj) return '';
+      if (typeof obj === 'string') return obj;
+      return obj[STATE.lang] || obj.RU || '';
+    }
+
+    function formatTenge(num) {
+      return Number(num).toLocaleString('ru-RU') + ' ₸';
+    }
+
+    function getCityLabel(cityKey) {
+      const map = { Almaty: 'city_almaty', Astana: 'city_astana', Shymkent: 'city_shymkent' };
+      return map[cityKey] ? t(map[cityKey]) : cityKey;
+    }
+
+    function getStyleLabel(styleKey) {
+      const map = {
+        'street-art': 'style_street',
+        'graffiti': 'style_graffiti',
+        'ethno-modern': 'style_ethno',
+        'stencil': 'style_stencil'
+      };
+      return map[styleKey] ? t(map[styleKey]) : styleKey;
+    }
+
+    function renderBatteryBar(raised, goal) {
+      const pct = Math.min(100, Math.round((raised / goal) * 100));
+      const filledCount = Math.round(pct / 10);
+      const isOver = raised >= goal;
+      let segs = '';
+      for (let i = 0; i < 10; i++) {
+        const cls = i < filledCount ? (isOver ? 'battery-seg overfunded' : 'battery-seg filled') : 'battery-seg';
+        segs += `<div class="${cls}"></div>`;
+      }
+      return `
+        <div class="battery-wrapper" title="${pct}%">
+          <div class="battery-body">${segs}</div>
+          <div class="battery-cap"></div>
+        </div>
+      `;
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast-banner');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3400);
+    }
+
+    /* ==========================================================================
+       5. BILINGUAL SWITCHING & SPA NAVIGATION
+       ========================================================================== */
+    function setLanguage(lang) {
+      STATE.lang = lang;
+      document.documentElement.lang = lang.toLowerCase();
+
+      document.getElementById('btn-lang-kz').classList.toggle('active', lang === 'KZ');
+      document.getElementById('btn-lang-ru').classList.toggle('active', lang === 'RU');
+
+      // Translate static DOM elements with data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+
+      // Translate rich HTML hero headline & input placeholders
+      document.getElementById('hero-headline').innerHTML = t('hero_headline_html');
+      document.getElementById('artist-search-input').placeholder = t('search_placeholder');
+
+      // Re-render dynamic components
+      renderTicker();
+      renderHomeView();
+      populateMapArtistDropdown();
+      renderArtistsView();
+      renderRoutesView();
+      renderFaqAccordion();
+
+      if (STATE.selectedMuralId) {
+        openMuralDrawer(STATE.selectedMuralId);
+      }
+      if (STATE.activeRouteId) {
+        const r = STATE.routes.find(x => x.id === STATE.activeRouteId);
+        if (r) document.getElementById('active-route-title').textContent = loc(r.title);
+      }
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobile-menu').classList.toggle('open');
+    }
+
+    function navigateTo(viewName) {
+      STATE.currentView = viewName;
+      document.getElementById('mobile-menu').classList.remove('open');
+
+      // Toggle views
+      document.querySelectorAll('.spa-view').forEach(v => v.classList.remove('active'));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) target.classList.add('active');
+
+      // Update active nav links
+      document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-route') === viewName);
+      });
+
+      window.scrollTo({ top: 0, behavior: 'instant' });
+
+      // Lazy init / resize Leaflet instances when their view becomes visible
+      if (viewName === 'map') {
+        initMainMap();
+        setTimeout(() => {
+          if (mainMap) mainMap.invalidateSize();
+        }, 60);
+      } else if (viewName === 'add') {
+        initPickerMap();
+        setTimeout(() => {
+          if (pickerMap) pickerMap.invalidateSize();
+        }, 60);
+      }
+    }
+
+    /* ==========================================================================
+       6. LIVE DONATION TICKER & HOME VIEW RENDERING
+       ========================================================================== */
+    function renderTicker() {
+      const track = document.getElementById('donation-ticker-track');
+      const itemsHTML = STATE.donations.map(d => `
+        <span class="ticker-item">
+          ⚡ ${d.sender} → ${d.artistHandle}: <span style="color:#FFFFFF;">${formatTenge(d.amount)}</span> // "${loc(d.message)}"
+          <span class="ticker-sep">///</span>
+        </span>
+      `).join('');
+      // Duplicate stream for seamless loop
+      track.innerHTML = itemsHTML + itemsHTML;
+    }
+
+    function updateRadarCoords(text) {
+      document.getElementById('radar-live-coords').textContent = text;
+    }
+
+    function jumpToCityOnMap(cityKey) {
+      navigateTo('map');
+      setMapCityFilter(cityKey);
+    }
+
+    function renderHomeView() {
+      // Update Radar city counts
+      const almatyCount = STATE.murals.filter(m => m.city === 'Almaty').length;
+      const astanaCount = STATE.murals.filter(m => m.city === 'Astana').length;
+      const shymkentCount = STATE.murals.filter(m => m.city === 'Shymkent').length;
+      document.getElementById('radar-lbl-almaty').textContent = `${getCityLabel('Almaty').toUpperCase()} [${almatyCount}]`;
+      document.getElementById('radar-lbl-astana').textContent = `${getCityLabel('Astana').toUpperCase()} [${astanaCount}]`;
+      document.getElementById('radar-lbl-shymkent').textContent = `${getCityLabel('Shymkent').toUpperCase()} [${shymkentCount}]`;
+
+      // Update Hero Stats Strip
+      const totalRaised = STATE.artists.reduce((sum, a) => sum + a.raised, 0);
+      document.getElementById('home-stats-strip').innerHTML = `
+        <div class="stat-box">
+          <div class="stat-num">${STATE.murals.length}</div>
+          <div class="stat-label">${t('stat_murals')}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">${STATE.artists.length}</div>
+          <div class="stat-label">${t('stat_artists')}</div>
+        </div>
+        <div class="stat-box" style="background:var(--acid);">
+          <div class="stat-num">${formatTenge(totalRaised)}</div>
+          <div class="stat-label">${t('stat_raised')}</div>
+        </div>
+      `;
+
+      // Render 6 Fresh Murals (across Almaty, Astana, Shymkent)
+      const featuredIds = ['m2', 'm6', 'm10', 'm1', 'm7', 'm12'];
+      const featuredMurals = featuredIds
+        .map(id => STATE.murals.find(m => m.id === id))
+        .filter(Boolean);
+
+      document.getElementById('home-fresh-murals').innerHTML = featuredMurals.map(m => renderMuralCardHTML(m)).join('');
+
+      // Render Top 3 Artists
+      const topArtists = [...STATE.artists].sort((a, b) => b.raised - a.raised).slice(0, 3);
+      document.getElementById('home-top-artists').innerHTML = topArtists.map(a => renderArtistCardHTML(a)).join('');
+    }
+
+    function renderMuralCardHTML(m) {
+      const artVisual = m.customImageUrl
+        ? `<img src="${m.customImageUrl}" alt="${loc(m.title)}" />`
+        : generateMuralSVG(m.id + m.artistHandle, m.style);
+
+      const modBadge = m.status === 'moderation'
+        ? `<span class="stamp stamp-signal" style="position:absolute; top:10px; right:10px; font-size:0.72rem; z-index:3;">${t('status_moderation')}</span>`
+        : '';
+
+      return `
+        <article class="card-brutal" style="display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div class="mural-art-frame" style="cursor:pointer;" onclick="focusMuralOnMap('${m.id}')">
+              ${artVisual}
+              ${modBadge}
+              <span class="tag-brutal tag-dark" style="position:absolute; bottom:8px; left:8px;">
+                ${getCityLabel(m.city)} // ${m.year}
+              </span>
+            </div>
+
+            <div style="padding:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px;">
+                <span class="tag-brutal tag-acid">${getStyleLabel(m.style)}</span>
+                <button type="button" class="font-mono" style="background:none; border:none; font-weight:800; font-size:0.8rem; cursor:pointer; text-decoration:underline; padding:0;" onclick="openArtistModal('${m.artistId}')">
+                  ${m.artistHandle}
+                </button>
+              </div>
+
+              <h3 class="font-display" style="font-size:1.35rem; margin:0 0 6px; cursor:pointer;" onclick="focusMuralOnMap('${m.id}')">
+                ${loc(m.title)}
+              </h3>
+              <div class="font-mono" style="font-size:0.75rem; color:#444; margin-bottom:10px;">
+                ${loc(m.address)}
+              </div>
+              <p style="font-size:0.9rem; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                ${loc(m.description)}
+              </p>
+            </div>
+          </div>
+
+          <div style="padding:12px 16px 16px; display:flex; gap:8px;">
+            <button type="button" class="btn-brutal btn-paper btn-sm" style="flex:1;" onclick="focusMuralOnMap('${m.id}')">
+              ${t('btn_on_map')}
+            </button>
+            <button type="button" class="btn-brutal btn-acid btn-sm" style="flex:1;" onclick="openDonateModal('${m.artistId}', '${m.id}')">
+              ${t('btn_donate')}
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderArtistCardHTML(a) {
+      const pct = Math.min(100, Math.round((a.raised / a.goal) * 100));
+      return `
+        <article class="card-brutal" style="padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px;">
+              <div style="width:68px; height:68px; border:3px solid var(--asphalt); flex-shrink:0;">
+                ${generateAvatarSVG(a.handle, a.accent)}
+              </div>
+              <div>
+                <span class="tag-brutal">${getCityLabel(a.city)}</span>
+                <h3 class="font-display" style="font-size:1.4rem; margin:4px 0 2px;">${loc(a.name)}</h3>
+                <div class="font-mono" style="font-size:0.82rem; font-weight:700; color:var(--electro);">${a.handle}</div>
+              </div>
+            </div>
+
+            <p style="font-size:0.9rem; margin:0 0 14px;">${loc(a.bio)}</p>
+
+            <!-- Segmented Battery Fundraising Tracker -->
+            <div style="background:var(--concrete); border:2px solid var(--asphalt); padding:10px; margin-bottom:14px;">
+              <div class="font-mono" style="font-size:0.7rem; font-weight:800; margin-bottom:4px;">${t('goal_label')}</div>
+              <div style="font-size:0.82rem; font-weight:600; margin-bottom:8px;">${loc(a.goalDesc)}</div>
+              ${renderBatteryBar(a.raised, a.goal)}
+              <div class="font-mono" style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; margin-top:6px;">
+                <span>${formatTenge(a.raised)} ${t('raised_of')} ${formatTenge(a.goal)}</span>
+                <span>${pct}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn-brutal btn-paper btn-sm" style="flex:1;" onclick="openArtistModal('${a.id}')">
+              ${t('btn_profile')}
+            </button>
+            <button type="button" class="btn-brutal btn-acid btn-sm" style="flex:1;" onclick="openDonateModal('${a.id}')">
+              ${t('btn_donate')}
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    /* ==========================================================================
+       7. LEAFLET.JS DARK MAP ENGINE, CLUSTERS, ROUTES & DRAWER
+       ========================================================================== */
+    let mainMap = null;
+    let markersLayer = null;
+    let routeLayer = null;
+    let userLayer = null;
+
+    const CITY_CENTERS = {
+      ALL: { lat: 47.5, lng: 72.5, zoom: 5 },
+      Almaty: { lat: 43.2555, lng: 76.9365, zoom: 14 },
+      Astana: { lat: 51.1580, lng: 71.4250, zoom: 13 },
+      Shymkent: { lat: 42.3152, lng: 69.5925, zoom: 14 }
+    };
+
+    function initMainMap() {
+      if (mainMap) return;
+
+      mainMap = L.map('main-map', {
+        center: [CITY_CENTERS.ALL.lat, CITY_CENTERS.ALL.lng],
+        zoom: CITY_CENTERS.ALL.zoom,
+        zoomControl: true
+      });
+
+      // CartoDB Dark Matter Tile Layer
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(mainMap);
+
+      markersLayer = L.layerGroup().addTo(mainMap);
+      routeLayer = L.layerGroup().addTo(mainMap);
+      userLayer = L.layerGroup().addTo(mainMap);
+
+      // Re-render clusters vs individual pins on zoom changes
+      mainMap.on('zoomend', () => {
+        renderMapMarkers();
+      });
+
+      populateMapArtistDropdown();
+      renderMapMarkers();
+    }
+
+    function populateMapArtistDropdown() {
+      const select = document.getElementById('map-artist-select');
+      if (!select) return;
+      const currentVal = STATE.mapFilters.artist;
+      select.innerHTML = `<option value="ALL">${STATE.lang === 'KZ' ? 'Барлық суретшілер' : 'Все художники'}</option>` +
+        STATE.artists.map(a => `<option value="${a.id}">${loc(a.name)} (${a.handle})</option>`).join('');
+      select.value = currentVal;
+    }
+
+    function setMapCityFilter(city) {
+      STATE.mapFilters.city = city;
+      document.querySelectorAll('#map-city-filters .chip-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-city') === city);
+      });
+
+      if (mainMap && CITY_CENTERS[city]) {
+        const target = CITY_CENTERS[city];
+        mainMap.flyTo([target.lat, target.lng], target.zoom, { duration: 0.7 });
+      }
+      renderMapMarkers();
+    }
+
+    function setMapStyleFilter(style) {
+      STATE.mapFilters.style = style;
+      renderMapMarkers();
+    }
+
+    function setMapArtistFilter(artistId) {
+      STATE.mapFilters.artist = artistId;
+      renderMapMarkers();
+    }
+
+    function locateNearMe() {
+      initMainMap();
+      const simulateAlmaty = () => {
+        const lat = 43.2575;
+        const lng = 76.9425;
+        STATE.userLocation = { lat, lng };
+        userLayer.clearLayers();
+        const icon = L.divIcon({ className: '', html: '<div class="user-radar-pin"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+        L.marker([lat, lng], { icon }).addTo(userLayer);
+        setMapCityFilter('Almaty');
+        mainMap.flyTo([lat, lng], 15, { duration: 0.8 });
+        showToast(t('toast_near_me'));
+      };
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            // If user is inside Kazakhstan bounds, center on them; otherwise demo Almaty center
+            if (latitude > 40 && latitude < 56 && longitude > 46 && longitude < 88) {
+              STATE.userLocation = { lat: latitude, lng: longitude };
+              userLayer.clearLayers();
+              const icon = L.divIcon({ className: '', html: '<div class="user-radar-pin"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+              L.marker([latitude, longitude], { icon }).addTo(userLayer);
+              mainMap.flyTo([latitude, longitude], 14, { duration: 0.8 });
+            } else {
+              simulateAlmaty();
+            }
+          },
+          () => simulateAlmaty(),
+          { timeout: 3000 }
+        );
+      } else {
+        simulateAlmaty();
+      }
+    }
+
+    function getFilteredMurals() {
+      // If a walking route is active, show its stops in order
+      if (STATE.activeRouteId) {
+        const route = STATE.routes.find(r => r.id === STATE.activeRouteId);
+        if (route) {
+          return route.muralIds.map(id => STATE.murals.find(m => m.id === id)).filter(Boolean);
+        }
+      }
+
+      return STATE.murals.filter(m => {
+        if (STATE.mapFilters.city !== 'ALL' && m.city !== STATE.mapFilters.city) return false;
+        if (STATE.mapFilters.style !== 'ALL' && m.style !== STATE.mapFilters.style) return false;
+        if (STATE.mapFilters.artist !== 'ALL' && m.artistId !== STATE.mapFilters.artist) return false;
+        return true;
+      });
+    }
+
+    function renderMapMarkers() {
+      if (!mainMap || !markersLayer) return;
+      markersLayer.clearLayers();
+      routeLayer.clearLayers();
+
+      const filtered = getFilteredMurals();
+      document.getElementById('map-counter-badge').textContent = `[ ${filtered.length} ]`;
+
+      const currentZoom = mainMap.getZoom();
+
+      // If Active Route: Draw #E9FF1F Polyline + Numbered Stops 01, 02, 03...
+      if (STATE.activeRouteId && filtered.length > 0) {
+        const latlngs = filtered.map(m => [m.lat, m.lng]);
+        // Dark outer casing + Acid Yellow inner line
+        L.polyline(latlngs, { color: '#111111', weight: 9, opacity: 0.95 }).addTo(routeLayer);
+        L.polyline(latlngs, { color: '#E9FF1F', weight: 5, opacity: 1, dashArray: '10 6' }).addTo(routeLayer);
+
+        filtered.forEach((m, idx) => {
+          const numStr = String(idx + 1).padStart(2, '0');
+          const isActive = STATE.selectedMuralId === m.id;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="brutal-pin route-stop ${isActive ? 'active' : ''}">${numStr}</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+          });
+          const marker = L.marker([m.lat, m.lng], { icon }).addTo(markersLayer);
+          marker.on('click', () => openMuralDrawer(m.id));
+        });
+        return;
+      }
+
+      // Country-level zoom (<= 6): Render square brutalist city clusters
+      if (currentZoom <= 6 && filtered.length > 3) {
+        const byCity = {};
+        filtered.forEach(m => {
+          if (!byCity[m.city]) byCity[m.city] = [];
+          byCity[m.city].push(m);
+        });
+
+        Object.entries(byCity).forEach(([cityKey, list]) => {
+          const center = CITY_CENTERS[cityKey] || { lat: list[0].lat, lng: list[0].lng };
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="brutal-cluster">${list.length}</div>`,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
+          });
+          const clusterMarker = L.marker([center.lat, center.lng], { icon }).addTo(markersLayer);
+          clusterMarker.on('click', () => {
+            mainMap.flyTo([center.lat, center.lng], 13, { duration: 0.65 });
+          });
+        });
+        return;
+      }
+
+      // Individual Mural Pins (#E9FF1F squares, #FF3B1D when active)
+      filtered.forEach(m => {
+        const isActive = STATE.selectedMuralId === m.id;
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="brutal-pin ${isActive ? 'active' : ''}">■</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+        const marker = L.marker([m.lat, m.lng], { icon }).addTo(markersLayer);
+        marker.on('click', () => openMuralDrawer(m.id));
+      });
+    }
+
+    function openMuralDrawer(muralId) {
+      const m = STATE.murals.find(x => x.id === muralId);
+      if (!m) return;
+
+      STATE.selectedMuralId = muralId;
+      renderMapMarkers();
+
+      const coordText = `N ${m.lat.toFixed(4)}° E ${m.lng.toFixed(4)}°`;
+      document.getElementById('drawer-coords-header').textContent = coordText;
+
+      const artVisual = m.customImageUrl
+        ? `<img src="${m.customImageUrl}" alt="${loc(m.title)}" />`
+        : generateMuralSVG(m.id + m.artistHandle, m.style);
+
+      const statusStamp = m.status === 'moderation'
+        ? `<div style="margin-bottom:10px;"><span class="stamp stamp-signal" style="font-size:0.78rem;">${t('status_moderation')}</span></div>`
+        : '';
+
+      document.getElementById('mural-drawer-content').innerHTML = `
+        <div class="mural-art-frame">
+          ${artVisual}
+        </div>
+
+        <div style="padding:18px;">
+          ${statusStamp}
+
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+            <span class="tag-brutal tag-dark">${getCityLabel(m.city)}</span>
+            <span class="tag-brutal tag-acid">${getStyleLabel(m.style)}</span>
+            <span class="tag-brutal">${m.year}</span>
+          </div>
+
+          <h2 class="font-display" style="font-size:1.75rem; margin:0 0 8px;">${loc(m.title)}</h2>
+
+          <div style="margin-bottom:12px;">
+            <button type="button" class="btn-brutal btn-paper btn-sm" onclick="openArtistModal('${m.artistId}')">
+              ✎ ${m.artistHandle} →
+            </button>
+          </div>
+
+          <!-- Address & Copyable Monospace GPS Coordinates -->
+          <div style="background:var(--concrete); border:2px solid var(--asphalt); padding:10px; margin-bottom:14px; font-family:var(--font-mono); font-size:0.78rem;">
+            <div style="font-weight:700; margin-bottom:4px;">📍 ${loc(m.address)}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <span>${coordText}</span>
+              <button type="button" class="chip-btn" style="padding:2px 6px; font-size:0.7rem;" onclick="copyCoordsText('${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}')">
+                COPY
+              </button>
+            </div>
+          </div>
+
+          <p style="font-size:0.96rem; line-height:1.55; margin:0 0 20px;">
+            ${loc(m.description)}
+          </p>
+
+          <button type="button" class="btn-brutal btn-acid" style="width:100%;" onclick="openDonateModal('${m.artistId}', '${m.id}')">
+            ${t('btn_support_author')}
+          </button>
+        </div>
+      `;
+
+      document.getElementById('mural-drawer').classList.remove('hidden');
+    }
+
+    function closeMuralDrawer() {
+      STATE.selectedMuralId = null;
+      document.getElementById('mural-drawer').classList.add('hidden');
+      renderMapMarkers();
+    }
+
+    function focusMuralOnMap(muralId) {
+      const m = STATE.murals.find(x => x.id === muralId);
+      if (!m) return;
+
+      clearActiveRoute(false);
+      STATE.mapFilters.city = 'ALL';
+      STATE.mapFilters.style = 'ALL';
+      STATE.mapFilters.artist = 'ALL';
+      document.querySelectorAll('#map-city-filters .chip-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-city') === 'ALL');
+      });
+
+      navigateTo('map');
+      setTimeout(() => {
+        if (mainMap) {
+          mainMap.flyTo([m.lat, m.lng], 16, { duration: 0.7 });
+        }
+        openMuralDrawer(muralId);
+      }, 80);
+    }
+
+    function copyCoordsText(txt) {
+      const temp = document.createElement('textarea');
+      temp.value = txt;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+      showToast(t('toast_copied'));
+    }
+
+    /* ==========================================================================
+       8. ARTISTS DIRECTORY & ARTIST PROFILE MODAL
+       ========================================================================== */
+    function renderArtistsView() {
+      const query = (document.getElementById('artist-search-input')?.value || '').trim().toLowerCase();
+      const city = document.getElementById('artist-city-filter')?.value || 'ALL';
+      const sortBy = document.getElementById('artist-sort-select')?.value || 'raised_desc';
+
+      let list = STATE.artists.filter(a => {
+        if (city !== 'ALL' && a.city !== city) return false;
+        if (query) {
+          const hay = `${a.name.RU} ${a.name.KZ} ${a.handle}`.toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
+        return true;
+      });
+
+      list.sort((a, b) => {
+        if (sortBy === 'progress_desc') {
+          return (b.raised / b.goal) - (a.raised / a.goal);
+        }
+        return b.raised - a.raised;
+      });
+
+      document.getElementById('artists-directory-grid').innerHTML = list.map(a => renderArtistCardHTML(a)).join('');
+    }
+
+    function openArtistModal(artistId) {
+      const a = STATE.artists.find(x => x.id === artistId);
+      if (!a) return;
+
+      const pct = Math.min(100, Math.round((a.raised / a.goal) * 100));
+      const artistMurals = STATE.murals.filter(m => m.artistId === a.id || m.artistHandle === a.handle);
+
+      document.getElementById('artist-modal-header-title').textContent = `${loc(a.name)} // ${a.handle}`;
+
+      const worksHTML = artistMurals.map(m => `
+        <div class="card-brutal" style="cursor:pointer;" onclick="closeArtistModal(); focusMuralOnMap('${m.id}');">
+          <div class="mural-art-frame" style="aspect-ratio:16/9;">
+            ${m.customImageUrl ? `<img src="${m.customImageUrl}" alt="${loc(m.title)}" />` : generateMuralSVG(m.id + m.artistHandle, m.style)}
+          </div>
+          <div style="padding:10px;">
+            <div class="font-display" style="font-size:1.05rem;">${loc(m.title)}</div>
+            <div class="font-mono" style="font-size:0.72rem; color:#444;">${loc(m.address)}</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('artist-modal-body').innerHTML = `
+        <div style="display:flex; flex-wrap:wrap; gap:18px; align-items:center; margin-bottom:18px;">
+          <div style="width:92px; height:92px; border:3px solid var(--asphalt); box-shadow:4px 4px 0px var(--asphalt);">
+            ${generateAvatarSVG(a.handle, a.accent)}
+          </div>
+          <div style="flex:1; min-width:220px;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+              <span class="tag-brutal tag-dark">${getCityLabel(a.city)}</span>
+              ${a.socials.map(s => `<span class="tag-brutal">${s} ↗</span>`).join('')}
+            </div>
+            <h2 class="font-display" style="font-size:2rem; margin:0;">${loc(a.name)}</h2>
+            <div class="font-mono" style="font-weight:800; color:var(--electro);">${a.handle}</div>
+          </div>
+          <button type="button" class="btn-brutal btn-acid" onclick="closeArtistModal(); openDonateModal('${a.id}');">
+            ${t('btn_support_author')}
+          </button>
+        </div>
+
+        <p style="font-size:1rem; margin:0 0 18px;">${loc(a.bio)}</p>
+
+        <!-- Segmented Battery Goal Block -->
+        <div style="background:var(--concrete); border:3px solid var(--asphalt); padding:14px; margin-bottom:22px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span class="font-mono" style="font-size:0.78rem; font-weight:800;">${t('goal_label')}</span>
+            <span class="tag-brutal tag-acid">${pct}%</span>
+          </div>
+          <div style="font-weight:700; margin-bottom:10px;">${loc(a.goalDesc)}</div>
+          ${renderBatteryBar(a.raised, a.goal)}
+          <div class="font-mono" style="font-size:0.9rem; font-weight:800; margin-top:8px;">
+            ${formatTenge(a.raised)} ${t('raised_of')} ${formatTenge(a.goal)}
+          </div>
+        </div>
+
+        <h4 class="font-display" style="font-size:1.25rem; margin:0 0 12px;">${t('artist_works_title')} (${artistMurals.length})</h4>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap:12px;">
+          ${worksHTML}
+        </div>
+      `;
+
+      document.getElementById('artist-modal').classList.add('open');
+    }
+
+    function closeArtistModal() {
+      document.getElementById('artist-modal').classList.remove('open');
+    }
+
+    /* ==========================================================================
+       9. CURATED WALKING ROUTES VIEW & POLYLINE ACTIVATION
+       ========================================================================== */
+    function renderRoutesView() {
+      document.getElementById('routes-list-grid').innerHTML = STATE.routes.map(r => {
+        const stops = r.muralIds.map(id => STATE.murals.find(m => m.id === id)).filter(Boolean);
+        const stopsListHTML = stops.map((m, idx) => `
+          <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--asphalt);">
+            <span class="tag-brutal tag-acid" style="font-size:0.8rem;">${String(idx + 1).padStart(2, '0')}</span>
+            <div style="flex:1;">
+              <div style="font-weight:700; font-size:0.92rem;">${loc(m.title)}</div>
+              <div class="font-mono" style="font-size:0.72rem; color:#444;">${loc(m.address)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        return `
+          <article class="card-brutal" style="padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                <span class="tag-brutal tag-dark">${getCityLabel(r.city)}</span>
+                <span class="font-mono" style="font-size:0.8rem; font-weight:800;">
+                  🚶 ${r.distance} // ⏱ ${loc(r.duration)} // ${stops.length} ${t('route_stops_count')}
+                </span>
+              </div>
+
+              <h3 class="font-display" style="font-size:1.55rem; margin:0 0 10px;">${loc(r.title)}</h3>
+              <p style="font-size:0.92rem; margin:0 0 16px;">${loc(r.description)}</p>
+
+              <div style="background:var(--white); border:2px solid var(--asphalt); padding:10px 12px; margin-bottom:18px;">
+                ${stopsListHTML}
+              </div>
+            </div>
+
+            <button type="button" class="btn-brutal btn-acid" style="width:100%;" onclick="activateRouteOnMap('${r.id}')">
+              ${t('btn_show_route_map')}
+            </button>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function activateRouteOnMap(routeId) {
+      const route = STATE.routes.find(r => r.id === routeId);
+      if (!route) return;
+
+      STATE.activeRouteId = routeId;
+      navigateTo('map');
+
+      document.getElementById('active-route-banner').style.display = 'flex';
+      document.getElementById('active-route-title').textContent = loc(route.title);
+
+      setTimeout(() => {
+        if (!mainMap) return;
+        const stops = route.muralIds.map(id => STATE.murals.find(m => m.id === id)).filter(Boolean);
+        if (stops.length > 0) {
+          const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lng]));
+          mainMap.fitBounds(bounds, { padding: [60, 60] });
+          openMuralDrawer(stops[0].id);
+        }
+        renderMapMarkers();
+      }, 90);
+    }
+
+    function clearActiveRoute(rerender = true) {
+      STATE.activeRouteId = null;
+      document.getElementById('active-route-banner').style.display = 'none';
+      if (rerender) renderMapMarkers();
+    }
+
+    /* ==========================================================================
+       10. ADD MURAL VIEW (COORDINATE PICKER MAP & MODERATION STAMP)
+       ========================================================================== */
+    let pickerMap = null;
+    let pickerMarker = null;
+    let pickedCoords = { lat: 43.2389, lng: 76.8897 };
+    let uploadedPhotoURL = null;
+
+    function initPickerMap() {
+      if (pickerMap) return;
+
+      pickerMap = L.map('picker-map', {
+        center: [pickedCoords.lat, pickedCoords.lng],
+        zoom: 13
+      });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 19
+      }).addTo(pickerMap);
+
+      const pinIcon = L.divIcon({
+        className: '',
+        html: '<div class="brutal-pin active">+</div>',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+
+      pickerMarker = L.marker([pickedCoords.lat, pickedCoords.lng], { icon: pinIcon }).addTo(pickerMap);
+
+      pickerMap.on('click', (e) => {
+        pickedCoords = { lat: e.latlng.lat, lng: e.latlng.lng };
+        pickerMarker.setLatLng([pickedCoords.lat, pickedCoords.lng]);
+        document.getElementById('picker-coords-display').textContent =
+          `${pickedCoords.lat.toFixed(4)}, ${pickedCoords.lng.toFixed(4)}`;
+      });
+
+      updateAddPreviewPreset('ethno');
+    }
+
+    function centerPickerMapByCity(cityKey) {
+      const c = CITY_CENTERS[cityKey] || CITY_CENTERS.Almaty;
+      pickedCoords = { lat: c.lat, lng: c.lng };
+      document.getElementById('picker-coords-display').textContent = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`;
+      if (pickerMap && pickerMarker) {
+        pickerMap.flyTo([c.lat, c.lng], 13);
+        pickerMarker.setLatLng([c.lat, c.lng]);
+      }
+    }
+
+    function handlePhotoFileChange(event) {
+      const file = event.target.files && event.target.files[0];
+      if (file) {
+        uploadedPhotoURL = URL.createObjectURL(file);
+        document.getElementById('add-preview-frame').innerHTML = `<img src="${uploadedPhotoURL}" alt="Preview" />`;
+      }
+    }
+
+    function updateAddPreviewPreset(preset) {
+      uploadedPhotoURL = null;
+      document.getElementById('add-preview-frame').innerHTML = generateMuralSVG('preview_' + preset, preset);
+    }
+
+    function handleAddMuralSubmit(event) {
+      event.preventDefault();
+      const errBox = document.getElementById('add-form-error');
+      errBox.style.display = 'none';
+
+      const city = document.getElementById('add-city').value;
+      const style = document.getElementById('add-style').value;
+      const title = document.getElementById('add-title').value.trim();
+      const artistRaw = document.getElementById('add-artist').value.trim();
+      const address = document.getElementById('add-address').value.trim();
+      const desc = document.getElementById('add-desc').value.trim();
+
+      if (!title || !artistRaw || !address || !desc) {
+        errBox.textContent = STATE.lang === 'KZ' ? 'Барлық міндетті өрістерді толтырыңыз!' : 'Заполните все обязательные поля!';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const handle = artistRaw.startsWith('@') ? artistRaw : '@' + artistRaw.replace(/\s+/g, '_').toLowerCase();
+      const matchedArtist = STATE.artists.find(a => a.handle.toLowerCase() === handle.toLowerCase());
+
+      const newMural = {
+        id: 'm_' + Date.now(),
+        city,
+        style,
+        year: 2026,
+        lat: pickedCoords.lat,
+        lng: pickedCoords.lng,
+        artistId: matchedArtist ? matchedArtist.id : 'a1',
+        artistHandle: handle,
+        status: 'moderation',
+        customImageUrl: uploadedPhotoURL,
+        title: { RU: title, KZ: title },
+        address: { RU: address, KZ: address },
+        description: { RU: desc, KZ: desc }
+      };
+
+      STATE.murals.unshift(newMural);
+      document.getElementById('add-mural-form').reset();
+      uploadedPhotoURL = null;
+      updateAddPreviewPreset('ethno');
+
+      renderHomeView();
+      showToast(t('toast_mural_added'));
+      focusMuralOnMap(newMural.id);
+    }
+
+    /* ==========================================================================
+       11. FAQ ACCORDION (ABOUT PAGE)
+       ========================================================================== */
+    function renderFaqAccordion() {
+      document.getElementById('faq-accordion').innerHTML = STATE.faqs.map((item, idx) => `
+        <div class="faq-item ${idx === 0 ? 'open' : ''}">
+          <button type="button" class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+            <span>0${idx + 1} // ${loc(item.q)}</span>
+            <span class="font-mono">+ / -</span>
+          </button>
+          <div class="faq-answer">${loc(item.a)}</div>
+        </div>
+      `).join('');
+    }
+
+    /* ==========================================================================
+       12. DEMO DONATION MODAL (IN TENGE ₸) & LIVE STATE UPDATES
+       ========================================================================== */
+    function openDonateModal(preselectedArtistId = null, preselectedMuralId = null) {
+      document.getElementById('donate-form-step').style.display = 'block';
+      document.getElementById('donate-success-step').style.display = 'none';
+
+      const artistSel = document.getElementById('donate-artist-select');
+      artistSel.innerHTML = STATE.artists.map(a =>
+        `<option value="${a.id}">${loc(a.name)} (${a.handle}) — ${getCityLabel(a.city)}</option>`
+      ).join('');
+
+      if (preselectedArtistId && STATE.artists.some(a => a.id === preselectedArtistId)) {
+        artistSel.value = preselectedArtistId;
+      }
+
+      onDonateArtistChange(preselectedMuralId);
+      selectDonatePreset(1000);
+      document.getElementById('donate-modal').classList.add('open');
+    }
+
+    function onDonateArtistChange(preselectedMuralId = null) {
+      const artistId = document.getElementById('donate-artist-select').value;
+      const muralSel = document.getElementById('donate-mural-select');
+      const works = STATE.murals.filter(m => m.artistId === artistId);
+
+      muralSel.innerHTML = `<option value="">${t('donate_any_mural')}</option>` +
+        works.map(m => `<option value="${m.id}">${loc(m.title)} (${getCityLabel(m.city)})</option>`).join('');
+
+      if (preselectedMuralId) {
+        muralSel.value = preselectedMuralId;
+      }
+    }
+
+    function selectDonatePreset(amount) {
+      STATE.selectedDonatePreset = amount;
+      document.getElementById('donate-amount-input').value = amount;
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.getAttribute('data-amt')) === amount);
+      });
+      updateFeeBreakdown();
+    }
+
+    function updateFeeBreakdown() {
+      const raw = Number(document.getElementById('donate-amount-input').value) || 0;
+      const amount = Math.max(0, Math.round(raw));
+      const artistShare = Math.round(amount * 0.95);
+      const platformFee = amount - artistShare;
+
+      document.getElementById('calc-artist-val').textContent = formatTenge(artistShare);
+      document.getElementById('calc-platform-val').textContent = formatTenge(platformFee);
+      document.getElementById('calc-total-val').textContent = formatTenge(amount);
+    }
+
+    function submitDemoDonation() {
+      const artistId = document.getElementById('donate-artist-select').value;
+      const artist = STATE.artists.find(a => a.id === artistId);
+      const amount = Math.max(100, Math.round(Number(document.getElementById('donate-amount-input').value) || 1000));
+      const sender = document.getElementById('donate-sender-input').value.trim() || 'Аноним';
+      const msg = document.getElementById('donate-msg-input').value.trim() ||
+        (STATE.lang === 'KZ' ? 'Көше өнеріне қолдау!' : 'На краску и новые стены!');
+
+      if (!artist) return;
+
+      // Update Artist Fundraising Progress
+      artist.raised += amount;
+
+      // Prepend to Live Donation Ticker
+      STATE.donations.unshift({
+        sender,
+        artistHandle: artist.handle,
+        amount,
+        message: { RU: msg, KZ: msg }
+      });
+
+      // Refresh all live UI counters & progress bars
+      renderTicker();
+      renderHomeView();
+      renderArtistsView();
+
+      // Show Receipt Step with "ОПЛАЧЕНО / ТӨЛЕНДІ" stamp
+      const txId = 'TX #MM-' + Math.floor(10000 + Math.random() * 89999);
+      const artistShare = Math.round(amount * 0.95);
+      document.getElementById('receipt-tx-id').textContent = `${txId} // ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      document.getElementById('receipt-details').innerHTML = `
+        <div style="margin-bottom:6px;"><strong>${t('donate_recipient_lbl')}</strong> ${loc(artist.name)} (${artist.handle})</div>
+        <div style="margin-bottom:6px;"><strong>${t('donate_sender_lbl')}</strong> ${sender}</div>
+        <div style="margin-bottom:6px;"><strong>${t('calc_artist')}</strong> ${formatTenge(artistShare)}</div>
+        <div><strong>${t('calc_total')}</strong> <span style="background:var(--acid); padding:2px 6px;">${formatTenge(amount)}</span></div>
+      `;
+
+      document.getElementById('donate-form-step').style.display = 'none';
+      document.getElementById('donate-success-step').style.display = 'block';
+    }
+
+    function closeDonateModal() {
+      document.getElementById('donate-modal').classList.remove('open');
+    }
+
+    // Close modals when clicking backdrop
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          backdrop.classList.remove('open');
+        }
+      });
+    });
+
+    /* ==========================================================================
+       13. INITIAL BOOTSTRAP
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTicker();
+      renderHomeView();
+      renderArtistsView();
+      renderRoutesView();
+      renderFaqAccordion();
+      updateFeeBreakdown();
+    });
+  </script>
+</body>
+</html>
